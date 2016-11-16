@@ -1,0 +1,94 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.8/css/materialize.min.css" />
+        <style>
+body {
+    overflow: hidden;
+}
+
+.popout-menu {
+    position: absolute;
+    display: none;
+    bottom: 50px;
+    width: 100%;
+    padding: 0px;   
+
+    background-color: #bbb;
+    box-shadow: 0px 0px 10px #000;
+    padding: 5px;    
+
+    z-index: 5;     
+}
+
+.menu {
+    position: absolute;
+    bottom: 0px;
+    height: 50px;
+    width: 100%;
+    background-color: #ccc;
+    padding: 5px;    
+    z-index: 5;
+
+    box-shadow: 0px 0px 10px #000;
+}
+
+#map {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+       </style>
+    </head>
+    <body>
+        <nav>
+            <div class="nav-wrapper">
+                <a href="#" class="brand-logo" style="margin-left: 15px;">Scanr</a>
+                <!--<ul id="nav-mobile" class="right hide-on-med-and-down">
+                    <li><a href="sass.html">Sass</a></li>
+                    <li><a href="badges.html">Components</a></li>
+                    <li><a href="collapsible.html">JavaScript</a></li>
+                </ul>-->
+            </div>
+        </nav>
+
+        <div class="popout-menu" id="scanner-menu">
+            <div>  
+                <ul data-bind="foreach: scanners">
+                    <li><a class="btn purple" href="#!" data-bind="text: $data, click: function() { $root.showMenu('scanner-menu'); $root.showAccount($data); }"></a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="popout-menu" id="sightings-menu">
+            <div data-bind="foreach: allNearby">
+                <a href="#!" data-bind="text: $root.pokeTable[pokemon_id], click: function() { $root.highlightCell(s2_cell_id); }"></a>  
+            </div>
+        </div>
+
+        <div class="popout-menu" id="catchable-menu">
+            <div data-bind="foreach: allCatchable">
+                <span data-bind="text: $root.pokeTable[pokemon_id]"></span>  
+            </div>
+        </div>        
+
+        <div id="map"></div>
+
+        <div class="menu">
+            <a href="#!" data-bind="click: function() { showMenu('scanner-menu'); }" class="btn">Scanners</a>
+            <a href="#!" data-bind="click: function() { showMenu('sightings-menu'); }" class="btn">Sightings</a>
+            <a href="#!" data-bind="click: function() { showMenu('catchable-menu'); }" class="btn">Catchable</a>
+        </div>
+
+        <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.4.1/knockout-min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.8/js/materialize.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.0/lodash.min.js"></script>
+        <script src="js/long.js"></script>
+        <script src="js/s2geometry.js"></script>
+        <script src="js/app.js"></script>       
+
+        <script async defer src="https://maps.googleapis.com/maps/api/js?key=<maps-api-key>&callback=window.fe.initMap"></script>
+    </body>
+</hmtl>

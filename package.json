@@ -1,0 +1,37 @@
+{
+  "name": "pogo-nocscan",
+  "version": "1.8.0",
+  "description": "Pokémon GO Scanner",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tstiegler/pogo-nocscan.git"
+  },
+  "keywords": [
+    "pokemon",
+    "pokemongo",
+    "pogo",
+    "api",
+    "niantic"
+  ],
+  "author": "Thomas Stiegler (https://github.com/tstiegler)",
+  "license": "MIT",
+  "homepage": "https://github.com/tstiegler/pogo-nocscan#readme",
+  "engines": {
+    "node": ">=4.0.0"
+  },
+  "dependencies": {
+    "bluebird": "^3.4.1",
+    "bluebird-retry": "^0.8.0",
+    "gpsoauthnode": "0.0.5",
+    "long": "^3.2.0",
+    "node-pogo-protos": "^2.1.0",
+    "node-pogo-signature": "git+https://github.com/starkevin/node-pogo-signature.git",
+    "request": "^2.74.0",
+    "s2-geometry": "^1.2.7",    
+    "express": "latest",
+    "pogobuf": "git+https://github.com/tstiegler/pogobuf.git",
+    "pushover-notifications": "latest",
+    "nodemailer": "latest",
+    "winston": "latest"
+  }
+}
