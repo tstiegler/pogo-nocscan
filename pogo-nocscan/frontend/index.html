@@ -55,7 +55,7 @@ body {
     <body>
         <nav>
             <div class="nav-wrapper">
-                <a href="#" class="brand-logo" style="margin-left: 15px;">Scanr</a>
+                <a href="#" class="brand-logo" style="margin-left: 15px;">POGO-NocScan</a>
                 <!--<ul id="nav-mobile" class="right hide-on-med-and-down">
                     <li><a href="sass.html">Sass</a></li>
                     <li><a href="badges.html">Components</a></li>
@@ -76,20 +76,13 @@ body {
             <div data-bind="foreach: allNearby">
                 <a href="#!" data-bind="text: $root.pokeTable[pokemon_id], click: function() { $root.highlightCell(s2_cell_id); }"></a>  
             </div>
-        </div>
-
-        <div class="popout-menu" id="catchable-menu">
-            <div data-bind="foreach: allCatchable">
-                <span data-bind="text: $root.pokeTable[pokemon_id]"></span>  
-            </div>
-        </div>        
+        </div>   
 
         <div id="map"></div>
 
         <div class="menu">
             <a href="#!" data-bind="click: function() { showMenu('scanner-menu'); }" class="btn">Scanners</a>
             <a href="#!" data-bind="click: function() { showMenu('sightings-menu'); }" class="btn">Sightings</a>
-            <a href="#!" data-bind="click: function() { showMenu('catchable-menu'); }" class="btn">Catchable</a>
         </div>
 
         <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
