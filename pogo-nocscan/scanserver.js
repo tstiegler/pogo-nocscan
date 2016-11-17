@@ -68,7 +68,7 @@ app.get('/scanners', function (req, res) {
 app.get('/scanner/:username', function(req, res) {
     var scanner = getByUsername(req.params.username);
 
-    if(scanner != null)
+    if(scanner != null && scanner.getActiveScanner() != null)
         res.send(scanner.getActiveScanner());
     else
         res.send([]);
@@ -81,7 +81,7 @@ app.get('/scanner/:username', function(req, res) {
 app.get('/mapobjects/:username', function(req, res) {    
     var scanner = getByUsername(req.params.username);
 
-    if(scanner != null)
+    if(scanner != null && scanner.getActiveScanner() != null)
         res.send(scanner.getActiveScanner().getLastMapObjects());
     else
         res.send([]);
@@ -94,7 +94,7 @@ app.get('/mapobjects/:username', function(req, res) {
 app.get('/encounters/:username', function(req, res) {    
     var scanner = getByUsername(req.params.username);
 
-    if(scanner != null)
+    if(scanner != null && scanner.getActiveScanner() != null)
         res.send(scanner.getActiveScanner().getKnownEncounters());
     else
         res.send([]);
@@ -111,8 +111,6 @@ app.get('/position/:username', function(req, res) {
         res.send(scanner.getActiveScanner().getPosition());
     else
         res.send([]);
-
-    res.send(scanner.getPosition());
 });
 
 
