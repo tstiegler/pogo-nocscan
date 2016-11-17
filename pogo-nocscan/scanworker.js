@@ -88,19 +88,26 @@ module.exports = function(account, timeToRun, strategy, logger) {
     
         // Before we do anything, clean up the old encounters.
         _.forOwn(knownEncounters, function(value, key) {
-            if(currentTime - value.timestamp > 1800000) // 30 min. Some encounters can apparently be 1hr, but whatever.
+            // Check for removal, 30 min. 
+            // Some encounters can apparently be 1hr, but whatever.
+            // Update seconds left for those not getting removed.
+            if(currentTime - value.timestamp > 1800000)                 
                 delete knownEncounters[key];
+            else
+                knownEncounters[key].secondsleft = 1800 - ((currentTime -  knownEncounters[key].timestamp) / 1000);     
         });
 
         // Check if we already have it, if so, update it (but not the timestamp)
         if(encounter.encounter_id in knownEncounters) {
             knownEncounters[encounter.encounter_id].encounter = encounter;
+            knownEncounters[encounter.encounter_id].secondsleft = 1800 - ((currentTime -  knownEncounters[encounter.encounter_id].timestamp) / 1000);
             return;
         }
 
         // Add it with the current timestamp.
         knownEncounters[encounter.encounter_id] = {
             timestamp: currentTime,
+            secondsleft: 1800,
             encounter: encounter
         }
     }
@@ -111,7 +118,12 @@ module.exports = function(account, timeToRun, strategy, logger) {
      */
     function getClient() {
         var result = new pogobuf.Client();
-        result.setProxy(account.proxy);
+        
+        if("proxy" in account && (typeof account.proxy === 'string'))
+            result.setProxy(account.proxy);
+        else if("proxy" in account)
+            result.setProxy(account.proxy.get());
+            
         return result;        
     }
 
@@ -120,7 +132,12 @@ module.exports = function(account, timeToRun, strategy, logger) {
      */
     function getLoginMethod() {
         var result = new pogobuf.PTCLogin();
-        result.setProxy(account.proxy);
+
+        if("proxy" in account && (typeof account.proxy === 'string'))
+            result.setProxy(account.proxy);
+        else if("proxy" in account)
+            result.setProxy(account.proxy.get());
+
         return result;
     }
 

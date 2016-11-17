@@ -1,9 +1,15 @@
 ﻿window.fe = (function() {
     var pokeTable = ["", "Bulbasaur","Ivysaur","Venusaur","Charmander","Charmeleon","Charizard","Squirtle","Wartortle","Blastoise","Caterpie","Metapod","Butterfree","Weedle","Kakuna","Beedrill","Pidgey","Pidgeotto","Pidgeot","Rattata","Raticate","Spearow","Fearow","Ekans","Arbok","Pikachu","Raichu","Sandshrew","Sandslash","Nidoran♀","Nidorina","Nidoqueen","Nidoran♂","Nidorino","Nidoking","Clefairy","Clefable","Vulpix","Ninetales","Jigglypuff","Wigglytuff","Zubat","Golbat","Oddish","Gloom","Vileplume","Paras","Parasect","Venonat","Venomoth","Diglett","Dugtrio","Meowth","Persian","Psyduck","Golduck","Mankey","Primeape","Growlithe","Arcanine","Poliwag","Poliwhirl","Poliwrath","Abra","Kadabra","Alakazam","Machop","Machoke","Machamp","Bellsprout","Weepinbell","Victreebel","Tentacool","Tentacruel","Geodude","Graveler","Golem","Ponyta","Rapidash","Slowpoke","Slowbro","Magnemite","Magneton","Farfetch’d","Doduo","Dodrio","Seel","Dewgong","Grimer","Muk","Shellder","Cloyster","Gastly","Haunter","Gengar","Onix","Drowzee","Hypno","Krabby","Kingler","Voltorb","Electrode","Exeggcute","Exeggutor","Cubone","Marowak","Hitmonlee","Hitmonchan","Lickitung","Koffing","Weezing","Rhyhorn","Rhydon","Chansey","Tangela","Kangaskhan","Horsea","Seadra","Goldeen","Seaking","Staryu","Starmie","Mr. Mime","Scyther","Jynx","Electabuzz","Magmar","Pinsir","Tauros","Magikarp","Gyarados","Lapras","Ditto","Eevee","Vaporeon","Jolteon","Flareon","Porygon","Omanyte","Omastar","Kabuto","Kabutops","Aerodactyl","Snorlax","Articuno","Zapdos","Moltres","Dratini","Dragonair","Dragonite","Mewtwo","Mew"];
 
+    var c = {
+        UI_MODE_SHOW_ACCOUNTS: 0,
+        UI_MODE_ENCOUNTERS_ONLY: 1
+    }
+
+    var uiMode = ko.observable(c.UI_MODE_ENCOUNTERS_ONLY);
     var scanners = ko.observableArray([]);
     var currentAccount = ko.observable();
-    var displayedCell = ko.observable();
+    var displayedCell = ko.observable();    
 
     var scannerInstances = {};
     var encounterMarkers = {};
@@ -16,6 +22,27 @@
     var activeAccountMarker;
 
     var showTimeout;
+
+    function initUI() {
+        $.getJSON("/uiconfig", function(uiconfig) {
+            uiMode(uiconfig.mode);
+            if(uiconfig.mode == c.UI_MODE_SHOW_ACCOUNTS) {
+                window.setInterval(getScanners, 10000);
+                getScanners();
+            }
+
+            window.setInterval(getAllEncounters, 10000);
+            getAllEncounters();
+
+            map.setCenter(uiconfig.initialCenter);
+
+            window.setTimeout(function() {
+                $(document).ready(function(){
+                    $('.tooltipped').tooltip({delay: 50});
+                });
+            }, 1000)
+        })
+    }
 
     function getScanners() {
         $.getJSON("/scanners", function(data) {
@@ -40,12 +67,21 @@
         });
     }
 
-    function createEncounterMarker(encounter) {
+    function getAllEncounters() {
+        $.getJSON("/allencounters", function(data) {
+            _.forOwn(data, function(value, id) {
+                createEncounterMarker(value.encounter, value.secondsleft);
+            });
+        });
+    }
+
+    function createEncounterMarker(encounter, secondsleft) {
         // Check if we have already created a marker for this encounter.
         if(encounter.encounter_id in encounterMarkers)
-            return;
+            return;            
 
         // Create the encounter marker.
+        console.log("Placing marker: " +  encounter.encounter_id + " (will last " + secondsleft + " seconds)");
         encounterMarkers[encounter.encounter_id] = new PokeMarker(
             new google.maps.LatLng(encounter.latitude, encounter.longitude), 
             map,
@@ -53,12 +89,21 @@
                 id: encounter.pokemon_id
             }
         );
-        //encounterMarkers[encounter.encounter_id].setZIndex(5);
+
+        // Set the marker to be removed after the secondsleft.
+        setTimeout(function() {
+            console.log("Removing marker:", encounter.encounter_id);
+
+            encounterMarkers[encounter.encounter_id].remove();
+            encounterMarkers[encounter.encounter_id].setMap(null);            
+            delete encounterMarkers[encounter.encounter_id];
+        }, secondsleft * 1000);
     }
 
     function scannerInstance(name) {
         var nearbyCircle;
         var catchableCircle;
+        var position;
 
         var pollInterval = window.setInterval(poll, 10000);
         poll();
@@ -78,8 +123,6 @@
                     _.each(cell.catchable_pokemons, function(item) {
                         item.s2_cell_id = cell.s2_cell_id; 
                         tmpCatchable.push(item);
-
-                        createEncounterMarker(item);
                     });
                     _.each(cell.nearby_pokemons, function(item) { 
                         item.s2_cell_id = cell.s2_cell_id; 
@@ -96,35 +139,23 @@
 
         function handleEncounters(data) {
             _.forOwn(data, function(value, id) {
-                createEncounterMarker(value.encounter);
+                createEncounterMarker(value.encounter, value.secondsleft);
             });
         }
 
         function handlePosition(data) {
             if(map != null && data != null) {
-                if(name == currentAccount()) {
-                    map.setCenter(data);
-
-                    if(activeAccountMarker == null) {
-                        activeAccountMarker = new google.maps.Marker({
-                            position: data,
-                            map: map,
-                            zIndex: 99999999
-                        });
-                    } else {
-                        activeAccountMarker.setPosition(data);
-                    }
-                }
+                position = data;
 
                 if(nearbyCircle != null) 
                     nearbyCircle.setCenter(data);
                 else {
                     nearbyCircle = new google.maps.Circle({
                         strokeColor: '#00FF00',
-                        strokeOpacity: 0.8,
+                        strokeOpacity: 0.2,
                         strokeWeight: 2,
                         fillColor: '#00FF00',
-                        fillOpacity: 0.35,
+                        fillOpacity: 0.1,
                         map: map,
                         center: data,
                         radius: 200,
@@ -137,10 +168,10 @@
                 else {        
                     catchableCircle = new google.maps.Circle({
                         strokeColor: '#0000FF',
-                        strokeOpacity: 0.8,
+                        strokeOpacity: 0.1,
                         strokeWeight: 2,
                         fillColor: '#0000FF',
-                        fillOpacity: 0.35,
+                        fillOpacity: 0.2,
                         map: map,
                         center: data,
                         radius: 70,
@@ -159,8 +190,9 @@
         return {
             poll: poll,
             kill: kill,        
+            getPosition: function() { return position; },
             nearbyCircle: nearbyCircle,
-            catchableCircle: catchableCircle
+            catchableCircle: catchableCircle            
         }
     }
 
@@ -174,6 +206,10 @@
         allCatchable([]);
         allNearby([]);
     }
+
+    function centerMap() {
+        map.setCenter(scannerInstances[currentAccount()].getPosition());
+    }
     
     google.maps.event.addDomListener(window, 'load', initMap);
     function initMap() {
@@ -181,11 +217,45 @@
 
         map = new google.maps.Map(document.getElementById('map'), {
           zoom: 17,
-          center: {lat: 0, lng: 0}
+          center: {lat: 0, lng: 0},
+          disableDefaultUI: true,
+          styles: [
+            {
+                "elementType": "labels",
+                "stylers": [
+                {
+                    "visibility": "off"
+                }
+                ]
+            },
+            {
+                "featureType": "landscape",
+                "stylers": [
+                {
+                    "visibility": "on"
+                }
+                ]
+            },
+            {
+                "featureType": "road",
+                "stylers": [
+                {
+                    "visibility": "on"
+                }
+                ]
+            },
+            {
+                "featureType": "water",
+                "stylers": [
+                {
+                    "visibility": "on"
+                }
+                ]
+            }
+          ]
         });
 
-        window.setInterval(getScanners, 10000);
-        getScanners();
+        initUI();
     }
 
     function showMenu(id) {
@@ -253,13 +323,13 @@
             div.style.cursor = 'pointer';
             div.style.width = '40px';
             div.style.height = '40px';
-            div.style.background = 'rgba(0, 0, 0, 0.3)';
+            div.style.background = 'rgba(0, 0, 0, 0.1)';
             div.style['background-image'] = "url(/frontend/img/pokemon/" + self.args.id + ".png)";
             div.style['background-repeat'] = "no-repeat";
             div.style['background-size'] = "contain";
             div.style['background-position'] = "center center";
             div.style['border-radius'] = "40px";
-            div.style['border'] = "5px solid rgba(0, 0, 0, 0.3)";
+            div.style['border'] = "7px solid rgba(0, 0, 0, 0.0)";
             div.style['z-index'] = "5";
 
             div.innerHTML = "<div class='marker-notch'></div>"
@@ -295,16 +365,20 @@
 
 
     return {
+        c: c,
         pokeTable: pokeTable,
 
+        uiMode: uiMode,
         showAccount: showAccount,
         showMenu: showMenu,
         initMap: initMap,
         highlightCell: highlightCell,
+        centerMap: centerMap,
 
         scanners: scanners,                
         allNearby: allNearby,
-        allCatchable: allCatchable
+        allCatchable: allCatchable,
+        currentAccount: currentAccount
     };
 })();
 

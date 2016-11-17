@@ -26,7 +26,8 @@ module.exports = function(config) {
                     result += (options.meta && Object.keys(options.meta).length ? ' ' + JSON.stringify(options.meta) : '' );
 
                     return result;                    
-                }
+                },
+                level: winston.level
             })
         ]
     });
@@ -56,10 +57,23 @@ module.exports = function(config) {
             config.accounts[idx].locator.setLogger(logger);
         });
 
+        checkIP();
+    }
+
+
+    /**
+     * Check host IP.
+     */
+    function checkIP() {
         // Get a non proxied request to find our clearnet IP.
         request('http://ipinfo.io', function(error, res, body) {
-            clearIPInfo = JSON.parse(body);
-            logger.info("Looks like our current IP is:", clearIPInfo.ip);
+            try {
+                clearIPInfo = JSON.parse(body);
+                logger.info("Looks like our current IP is:", clearIPInfo.ip);
+            } catch(err) {
+                logger.error("Error checking host IP:", err);
+                checkIP();
+            }   
 
             startRandomScanner();
         });
@@ -87,17 +101,27 @@ module.exports = function(config) {
             return;
         }
 
+        // Select the account.
         logger.info("Selecting random account from " + applicableAccounts.length + " applicable accounts.");
-
         var account = applicableAccounts[rand(applicableAccounts.length)];
         activeAccount = account;
 
-        // Calculate the time to run a scanner for with this account. (Random seconds between 1 hour and 3 hours)
-        var timeToRun = (rand(10800-3600) + 3600) * 1000;
+        // Calculate the amount of allowed sequential hours. (min 1, max 3)
+        var allowedSeqHours = 1;
+        for(var i = 0; i < 2; i++) {
+            currentHour++;
+            if(_.find(account.hours, function(hour) { return hour == currentHour }) == null)
+                break;
+            
+            allowedSeqHours++;
+        }
+
+        // Calculate the time to run a scanner for with this account.
+        var timeToRun = (rand((allowedSeqHours * 3600)-3600) + 3600) * 1000;
 
         // Check the account's proxy, then run an idling scanner with it.
         logger.info("Using account '" + account.username + "' for " + (timeToRun / 60000) + " minutes.");
-        proxyCheck(account.proxy, account)
+        proxyCheck(account)
             .then(function() { 
                 var strategy = strategyIdleFactory(account, config);
                 strategy.setLogger(logger);
@@ -125,21 +149,30 @@ module.exports = function(config) {
     /**
      * Check a proxy and make sure we are not getting our real IP leaked.
      */
-    function proxyCheck(proxy, account) {
+    function proxyCheck(account) {
         var p = new Promise(function(resolve, reject) {
-            logger.info("Testing proxy:", proxy);
+            var tProxy;
+
+            // If the proxy is a string, use that. If not, generate proxy.
+            if("proxy" in account && (typeof account.proxy === 'string'))
+                tProxy = account.proxy;
+            else if("proxy" in account)
+                tProxy = account.proxy.next();
+
+            // Check for allowable no proxy.
+            if("allowNoProxy" in account && account.allowNoProxy && (account.proxy == null || account.proxy == "")) {
+                resolve();
+                return;
+            }
+
+            logger.info("Testing proxy:", tProxy);
 
             // Do a request to IPInfo under the proxy.
             request({
                 method: "GET",
                 url: 'http://ipinfo.io',
-                proxy: proxy
+                proxy: tProxy
             }, function(error, res, body) {
-                // Check for allowable no proxy.
-                if("allowNoProxy" in account && account.allowNoProxy && (account.proxy == null || account.proxy == "")) {
-                    resolve();
-                    return;
-                }
 
                 // If we get an HTTP error, reject the promise.
                 if (!(!error && res.statusCode == 200)) {

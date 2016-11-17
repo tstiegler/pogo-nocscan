@@ -1,10 +1,40 @@
 <html>
     <head>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.8/css/materialize.min.css" />
-         <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        <link href="http://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+        
+        <title>POGO-NocScan</title>
+
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+        
         <style>
 body {
     overflow: hidden;
+}
+
+.titlebar {
+    background-color: #333;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 50px;
+    padding: 5px;
+
+    z-index: 999;
+
+    box-shadow: 0 0 15px #000;
+    border-bottom: 1px solid #999;
+}
+
+.titlebar h1 {
+    text-transform: uppercase;
+    color: #ddd;
+    font-size: 26px;
+    margin: 5px 0 0 0;
+    font-weight: 300;
+    text-shadow: 0 0 3px #000;
+
 }
 
 .popout-menu {
@@ -40,15 +70,25 @@ body {
     z-index: 1;
 }
 
+.info-window {
+    position: absolute;
+    right: 5px;
+    top: 55px;
+
+    width: 250px;
+    height: auto;
+    z-index: 999;
+}
+
 .marker-notch {
     width: 8px;
     height: 8px;
-    background-color: rgba(0, 0, 0, 0.8);
+    background-color: rgba(0, 0, 0, 0.4);
     border-radius: 4px;
 
     position: relative;
     top: 36px;
-    left: 11.5px;
+    left: 9px;
 }
 
 .sightings-wrapper {
@@ -74,49 +114,73 @@ h2 {
        </style>
     </head>
     <body>
-        <nav>
-            <div class="nav-wrapper">
-                <a href="#" class="brand-logo" style="margin-left: 15px;">POGO-NocScan</a>
-                <!--<ul id="nav-mobile" class="right hide-on-med-and-down">
-                    <li><a href="sass.html">Sass</a></li>
-                    <li><a href="badges.html">Components</a></li>
-                    <li><a href="collapsible.html">JavaScript</a></li>
-                </ul>-->
-            </div>
-        </nav>
-
-        <div class="popout-menu" id="scanner-menu">
-            <div>  
-                <ul data-bind="foreach: scanners">
-                    <li><a class="btn purple" href="#!" data-bind="text: $data, click: function() { $root.showMenu('scanner-menu'); $root.showAccount($data); }"></a></li>
-                </ul>
-            </div>
+        <div class="titlebar">
+            <h1>pogo-nocscan</h1>
         </div>
-        
-        <div class="popout-menu" id="sightings-menu">
-            <h2>Sightings</h2>
 
-            <div data-bind="foreach: allNearby" class="row sightings-wrapper">
-                <div class="col s4 center-align">
-                    <a href="#!" data-bind="click: function() { $root.highlightCell(s2_cell_id); $root.showMenu(''); }">
-                        <div data-bind="attr: {style: 'background-image: url(/frontend/img/pokemon/' + pokemon_id + '.png);'}" class="pokemon-tile"></div>
-                    </a>  
+        <!-- ko if: (uiMode() == c.UI_MODE_SHOW_ACCOUNTS) -->
+            <div class="popout-menu" id="scanner-menu">
+                <div>  
+                    <ul data-bind="foreach: scanners">
+                        <li><a class="btn purple" href="#!" data-bind="text: $data, click: function() { $root.showMenu('scanner-menu'); $root.showAccount($data); }"></a></li>
+                    </ul>
                 </div>
             </div>
-        </div>   
+            
+            <div class="popout-menu" id="sightings-menu">
+                <h2>Sightings</h2>
+
+                <div data-bind="foreach: allNearby" class="row sightings-wrapper">
+                    <div class="col s4 center-align">
+                        <a href="#!" data-bind="click: function() { $root.highlightCell(s2_cell_id); $root.showMenu(''); }">
+                            <div data-bind="attr: {style: 'background-image: url(/frontend/img/pokemon/' + pokemon_id + '.png);'}" class="pokemon-tile"></div>
+                        </a>  
+                    </div>
+                </div>
+            </div>   
+
+            <div class="info-window">
+                <div class="card blue-grey darken-1">
+                    <div class="card-content white-text">
+                        <!--<span class="card-title">Card Title</span>-->
+                        <p><strong>Account:</strong> <span data-bind="text: currentAccount"></span></p>
+                        <p><strong>Nearby:</strong> <span data-bind="text: allNearby().length"></span></p>
+                        <p><strong>Catchable:</strong> <span data-bind="text: allCatchable().length"></span></p>
+                    </div>
+                    <!--<div class="card-action">
+                        <a href="#">This is a link</a>
+                        <a href="#">This is a link</a>
+                    </div>-->
+                </div>                
+            </div>
+        <!-- /ko -->
 
         <div id="map"></div>
 
-        <div class="menu">
-            <a href="#!" data-bind="click: function() { showMenu('scanner-menu'); }" class="btn">Scanners</a>
-            <a href="#!" data-bind="click: function() { showMenu('sightings-menu'); }" class="btn">Sightings</a>
-        </div>
+        <!-- ko if: (uiMode() == c.UI_MODE_SHOW_ACCOUNTS) -->
+            <!--<div class="menu">
+                <a href="#!" data-bind="click: function() { showMenu('scanner-menu'); }" class="btn">Scanners</a>
+                <a href="#!" data-bind="click: function() { showMenu('sightings-menu'); }" class="btn">Sightings</a>
+            </div>-->
+
+            <div class="fixed-action-btn">
+                <a class="btn-floating btn-large red">
+                    <i class="large material-icons">keyboard_arrow_up</i>
+                </a>
+                <ul>
+                    <li><a class="btn-floating red tooltipped" data-bind="click: function() { centerMap(); }" data-position="left" data-tooltip="Center Map"><i class="material-icons">location_searching</i></a></li>
+                    <li><a class="btn-floating blue tooltipped" data-position="left" data-tooltip="Select Account"><i class="material-icons">account_circle</i></a></li>
+                    <li><a class="btn-floating green tooltipped" data-position="left" data-tooltip="Nearby Sightings"><i class="material-icons">visibility</i></a></li>
+                    <!--<li><a class="btn-floating blue"><i class="material-icons">attach_file</i></a></li>-->
+                </ul>
+            </div>
+        <!-- /ko -->
 
         <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.4.1/knockout-min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.8/js/materialize.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.0/lodash.min.js"></script>
-        <script src="https://maps.googleapis.com/maps/api/js?key=<maps-api-key>"></script>
+        <script src="https://maps.googleapis.com/maps/api/js?key=[maps-api-key]"></script>
         
         <script src="js/long.js"></script>
         <script src="js/s2geometry.js"></script>
