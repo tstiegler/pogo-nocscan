@@ -33,6 +33,6 @@
     "pushover-notifications": "latest",
     "nodemailer": "latest",
     "winston": "latest",
-	"lodash", "latest"
+	"lodash": "latest"
   }
 }
