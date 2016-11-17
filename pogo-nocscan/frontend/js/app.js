@@ -5,7 +5,8 @@
     var currentAccount = ko.observable();
     var displayedCell = ko.observable();
 
-    var scannerInstances = { };
+    var scannerInstances = {};
+    var encounterMarkers = {};
 
     var allCatchable = ko.observableArray([]);
     var allNearby = ko.observableArray([]);
@@ -15,9 +16,6 @@
     var activeAccountMarker;
 
     var showTimeout;
-
-    window.setInterval(getScanners, 10000);
-    getScanners();
 
     function getScanners() {
         $.getJSON("/scanners", function(data) {
@@ -42,6 +40,22 @@
         });
     }
 
+    function createEncounterMarker(encounter) {
+        // Check if we have already created a marker for this encounter.
+        if(encounter.encounter_id in encounterMarkers)
+            return;
+
+        // Create the encounter marker.
+        encounterMarkers[encounter.encounter_id] = new PokeMarker(
+            new google.maps.LatLng(encounter.latitude, encounter.longitude), 
+            map,
+            {
+                id: encounter.pokemon_id
+            }
+        );
+        //encounterMarkers[encounter.encounter_id].setZIndex(5);
+    }
+
     function scannerInstance(name) {
         var nearbyCircle;
         var catchableCircle;
@@ -62,7 +76,9 @@
                 _.each(mapObjects.map_cells, function(cell, idx) {                
                     _.each(cell.catchable_pokemons, function(item) {
                         item.s2_cell_id = cell.s2_cell_id; 
-                        tmpCatchable.push(item); 
+                        tmpCatchable.push(item);
+
+                        createEncounterMarker(item);
                     });
                     _.each(cell.nearby_pokemons, function(item) { 
                         item.s2_cell_id = cell.s2_cell_id; 
@@ -86,7 +102,7 @@
                         activeAccountMarker = new google.maps.Marker({
                             position: data,
                             map: map,
-                            zIndex: 4
+                            zIndex: 99999999
                         });
                     } else {
                         activeAccountMarker.setPosition(data);
@@ -152,11 +168,17 @@
         allNearby([]);
     }
     
+    google.maps.event.addDomListener(window, 'load', initMap);
     function initMap() {
+        console.log("Initializing map...");
+
         map = new google.maps.Map(document.getElementById('map'), {
           zoom: 17,
           center: {lat: 0, lng: 0}
         });
+
+        window.setInterval(getScanners, 10000);
+        getScanners();
     }
 
     function showMenu(id) {
@@ -191,6 +213,79 @@
         });
         displayedCellPoly.setMap(map);
     }
+
+    /**
+     * START CUSTOM MARKER
+     * ------------------------------------------------------------------------
+     */
+    var cMarkerId = 0;
+    function PokeMarker(latlng, map, args) {
+        this.latlng = latlng;	
+        this.args = args;	
+        this.setMap(map);	
+
+        cMarkerId++;
+        this.markerId = cMarkerId;
+    }
+
+    PokeMarker.prototype = new google.maps.OverlayView();
+
+    PokeMarker.prototype.draw = function() {
+        
+        var self = this;
+        
+        var div = this.div;
+        
+        if (!div) {
+        
+            div = this.div = document.createElement('div');
+            
+            div.className = 'marker';
+            
+            div.style.position = 'absolute';
+            div.style.cursor = 'pointer';
+            div.style.width = '40px';
+            div.style.height = '40px';
+            div.style.background = 'rgba(0, 0, 0, 0.3)';
+            div.style['background-image'] = "url(/frontend/img/pokemon/" + self.args.id + ".png)";
+            div.style['background-repeat'] = "no-repeat";
+            div.style['background-size'] = "contain";
+            div.style['background-position'] = "center center";
+            div.style['border-radius'] = "40px";
+            div.style['border'] = "5px solid rgba(0, 0, 0, 0.3)";
+            div.style['z-index'] = "5";
+
+            div.innerHTML = "<div class='marker-notch'></div>"
+
+            div.id = "mrk-" + self.markerId;
+            
+            google.maps.event.addDomListener(div, "click", function(event) {			
+                google.maps.event.trigger(self, "click");
+            });
+            
+            var panes = this.getPanes();
+            panes.overlayImage.appendChild(div);
+        }
+        
+        var point = this.getProjection().fromLatLngToDivPixel(this.latlng);
+        
+        if (point) {
+            div.style.left = (point.x - 20) + 'px';
+            div.style.top = (point.y - 50) + 'px';
+        }
+    };
+
+    PokeMarker.prototype.remove = function() {
+        if (this.div) {
+            this.div.parentNode.removeChild(this.div);
+            this.div = null;
+        }	
+    };
+
+    PokeMarker.prototype.getPosition = function() {
+        return this.latlng;	
+    };
+
 
     return {
         pokeTable: pokeTable,

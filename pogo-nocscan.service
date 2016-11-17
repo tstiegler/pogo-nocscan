@@ -1,0 +1,17 @@
+
+[Unit]
+Description=POGO NocScan
+
+[Service]
+ExecStart=/usr/bin/nodejs /home/pi/pogo-nocscan/pogo-nocscan/scanserver.js
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=pogo-nocscan
+User=pi
+Group=pi
+Environment=NODE_ENV=production
+WorkingDirectory=/home/pi/pogo-nocscan/pogo-nocscan
+
+[Install]
+WantedBy=multi-user.target

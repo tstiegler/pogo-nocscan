@@ -39,6 +39,17 @@ body {
     z-index: 1;
 }
 
+.marker-notch {
+    width: 8px;
+    height: 8px;
+    background-color: rgba(0, 0, 0, 0.8);
+    border-radius: 4px;
+
+    position: relative;
+    top: 36px;
+    left: 11.5px;
+}
+
        </style>
     </head>
     <body>
@@ -85,10 +96,10 @@ body {
         <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.4.1/knockout-min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.8/js/materialize.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.0/lodash.min.js"></script>
+        <script src="https://maps.googleapis.com/maps/api/js?key=<maps-api-key>"></script>
+        
         <script src="js/long.js"></script>
         <script src="js/s2geometry.js"></script>
         <script src="js/app.js"></script>       
-
-        <script async defer src="https://maps.googleapis.com/maps/api/js?key=<maps-api-key>&callback=window.fe.initMap"></script>
     </body>
 </hmtl>
