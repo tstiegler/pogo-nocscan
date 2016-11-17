@@ -51,6 +51,26 @@ body {
     left: 11.5px;
 }
 
+.sightings-wrapper {
+	height: 300px;
+	overflow-y: auto;
+}
+
+.pokemon-tile {
+    width: 100%;
+    height: 60px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center center;
+    margin-bottom: 15px;
+}
+
+h2 {
+    text-align: center;
+    text-transform: uppercase;
+    font-size: 26px;
+}
+
        </style>
     </head>
     <body>
@@ -74,8 +94,14 @@ body {
         </div>
         
         <div class="popout-menu" id="sightings-menu">
-            <div data-bind="foreach: allNearby">
-                <a href="#!" data-bind="text: $root.pokeTable[pokemon_id], click: function() { $root.highlightCell(s2_cell_id); }"></a>  
+            <h2>Sightings</h2>
+
+            <div data-bind="foreach: allNearby" class="row sightings-wrapper">
+                <div class="col s4 center-align">
+                    <a href="#!" data-bind="click: function() { $root.highlightCell(s2_cell_id); $root.showMenu(''); }">
+                        <div data-bind="attr: {style: 'background-image: url(/frontend/img/pokemon/' + pokemon_id + '.png);'}" class="pokemon-tile"></div>
+                    </a>  
+                </div>
             </div>
         </div>   
 
