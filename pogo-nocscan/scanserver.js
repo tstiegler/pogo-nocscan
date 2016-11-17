@@ -13,6 +13,23 @@ var scanners = [
     scanner(require('./config.example.js'))
 ];
 
+/**
+ * Get scanner by currently activeuser name
+ */
+function getByUsername(username) {
+    var scanner = _.filter(scanners, function(item) {
+        if(item.getActiveAccount() == null)
+            return false;
+
+        return item.getActiveAccount().username == username;
+    });
+
+    if(scanner.length == 0 || scanner[0].getActiveScanner() == null) 
+        return null;
+
+    scanner = scanner[0];
+}
+
 // Create app.
 var app = express();
 winston.level = 'debug';
@@ -48,21 +65,12 @@ app.get('/scanners', function (req, res) {
  * Fetch scanner active account info.
  */
 app.get('/scanner/:username', function(req, res) {
-    var scanner = _.filter(scanners, function(item) {
-        if(item.getActiveAccount() == null)
-            return false;
-            
-        return item.getActiveAccount().username == req.params.username;
-    });
+    var scanner = getByUsername(req.params.username);
 
-    if(scanner.length == 0 || scanner[0].getActiveScanner() == null) {
+    if(scanner != null)
+        res.send(scanner.getActiveScanner());
+    else
         res.send([]);
-        return;
-    }
-
-    scanner = scanner[0];
-
-    res.send(scanner.getActiveScanner());
 });
 
 
@@ -70,22 +78,12 @@ app.get('/scanner/:username', function(req, res) {
  * Fetch latest mapobjects for account. 
  */
 app.get('/mapobjects/:username', function(req, res) {    
+    var scanner = getByUsername(req.params.username);
 
-    var scanner = _.filter(scanners, function(item) {
-        if(item.getActiveAccount() == null)
-            return false;
-
-        return item.getActiveAccount().username == req.params.username;
-    });
-
-    if(scanner.length == 0 || scanner[0].getActiveScanner() == null) {
+    if(scanner != null)
+        res.send(scanner.getActiveScanner().getLastMapObjects());
+    else
         res.send([]);
-        return;
-    }
-
-    scanner = scanner[0];
-
-    res.send(scanner.getActiveScanner().getLastMapObjects());
 });
 
 
@@ -93,19 +91,13 @@ app.get('/mapobjects/:username', function(req, res) {
  * Fetch latest GPS position for account.
  */
 app.get('/position/:username', function(req, res) {
-    var scanner = _.filter(scanners, function(item) {
-        if(item.getActiveAccount() == null)
-            return false;
+    var scanner = getByUsername(req.params.username);
 
-        return item.getActiveAccount().username == req.params.username;
-    });
-
-    if(scanner.length == 0 || scanner[0].getActiveScanner() == null) {
+    if(scanner != null)
+        res.send(scanner.getActiveScanner().getPosition());
+    else
         res.send([]);
-        return;
-    }
 
-    scanner = scanner[0].getActiveScanner();
     res.send(scanner.getPosition());
 });
 

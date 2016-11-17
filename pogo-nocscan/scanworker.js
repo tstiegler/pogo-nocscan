@@ -17,8 +17,7 @@ var torHelper       = require("./helper.tor.js");
  * Start scanner with a given location.
  */
 module.exports = function(account, timeToRun, strategy, logger) {
-    
-    strategy.setLogger(logger);
+    var self;
 
     var finishWorkerCallback;
     var isAuthenticated = false;
@@ -27,6 +26,7 @@ module.exports = function(account, timeToRun, strategy, logger) {
     var scanTimeout;
     var lastMapObjects;
     var scanDelay = 30;
+    var knownEncounters = {};
  
     // ------------------------------------------------------------------------
 
@@ -77,6 +77,32 @@ module.exports = function(account, timeToRun, strategy, logger) {
 
         if(finishWorkerCallback != null)
             finishWorkerCallback();
+    }
+
+
+    /**
+     * Add a known encounter to the list.
+     */
+    function addEncounter(encounter) {
+        var currentTime = (new Date().getTime());
+    
+        // Before we do anything, clean up the old encounters.
+        _.forOwn(knownEncounters, function(value, key) {
+            if(currentTime - value.timestamp > 3600000)
+                delete knownEncounters[key];
+        });
+
+        // Check if we already have it, if so, update it (but not the timestamp)
+        if(encounter.encounter_id in knownEncounters) {
+            knownEncounters[encounter.encounter_id].encounter = encounter;
+            return;
+        }
+
+        // Add it with the current timestamp.
+        knownEncounters[encounter.encounter_id] = {
+            timestamp: currentTime,
+            encounter: encounter
+        }
     }
 
 
@@ -249,12 +275,14 @@ module.exports = function(account, timeToRun, strategy, logger) {
 
 
     // Return worker instance.
-    return {
+    self = {
         startWorker: startWorker,
+        addEncounter: addEncounter,
         finishWorkerCallback: function(cb) {
             finishWorkerCallback = cb;
         },
         getLastMapObjects: function() { return lastMapObjects; },
+        getKnownEncoutners: function() { return knownEncounters; },
         getPosition: function() { 
             return {
                 lat: client.playerLatitude,
@@ -262,4 +290,5 @@ module.exports = function(account, timeToRun, strategy, logger) {
             };
         }
     };
+    return self;
 }

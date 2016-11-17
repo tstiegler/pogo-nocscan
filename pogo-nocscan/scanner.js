@@ -99,10 +99,15 @@ module.exports = function(config) {
         logger.info("Using account '" + account.username + "' for " + (timeToRun / 60000) + " minutes.");
         proxyCheck(account.proxy, account)
             .then(function() { 
-                activeScanWorker = scanWorkerFactory(account, timeToRun, strategyIdleFactory(account, config), logger);
+                var strategy = strategyIdleFactory(account, config);
+                strategy.setLogger(logger);
+
+                activeScanWorker = scanWorkerFactory(account, timeToRun, strategy, logger);
                 activeScanWorker.finishWorkerCallback(function() {
                     setTimeout(startRandomScanner, 1000);
                 })
+
+                strategy.setParent(activeScanWorker);
                 activeScanWorker.startWorker(); 
             })
             .catch(function(e) {

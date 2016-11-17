@@ -12,6 +12,8 @@ var winston     = require('winston');
  * the given s2 cell/nearby radius intersection in its entirety)
  */
 module.exports = function(account, config) {
+    var parent;
+
     var warningNotifications = [];
     var catchableNotifications = [];
     var logger = winston;
@@ -69,7 +71,12 @@ module.exports = function(account, config) {
      */
     function handleCatchable(catchable_pokemons, cellKey) {
         // Check all nearby pokemon.
-        _.each(catchable_pokemons, function(poke) {        
+        _.each(catchable_pokemons, function(poke) {
+
+            // Add to the parent's known encounters.
+            if(parent)
+                parent.addEncounter(poke);
+
             var pokemonId = poke.pokemon_id;
             var pokemonName = pogobuf.Utils.getEnumKeyByValue(POGOProtos.Enums.PokemonId, poke.pokemon_id);
             var encounterId = poke.encounter_id;
@@ -105,6 +112,7 @@ module.exports = function(account, config) {
         getPosition: getPosition,
         handleNearby: handleNearby,
         handleCatchable: handleCatchable,
-        setLogger: function(nl) { logger = nl }
+        setLogger: function(nl) { logger = nl; },
+        setParent: function(o) { parent = p; }
     }
 }
