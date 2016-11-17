@@ -88,7 +88,7 @@ module.exports = function(account, timeToRun, strategy, logger) {
     
         // Before we do anything, clean up the old encounters.
         _.forOwn(knownEncounters, function(value, key) {
-            if(currentTime - value.timestamp > 3600000)
+            if(currentTime - value.timestamp > 1800000) // 30 min. Some encounters can apparently be 1hr, but whatever.
                 delete knownEncounters[key];
         });
 
@@ -282,7 +282,7 @@ module.exports = function(account, timeToRun, strategy, logger) {
             finishWorkerCallback = cb;
         },
         getLastMapObjects: function() { return lastMapObjects; },
-        getKnownEncoutners: function() { return knownEncounters; },
+        getKnownEncounters: function() { return knownEncounters; },
         getPosition: function() { 
             return {
                 lat: client.playerLatitude,

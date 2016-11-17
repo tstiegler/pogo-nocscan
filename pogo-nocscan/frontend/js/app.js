@@ -65,6 +65,7 @@
 
         function poll() {
             $.getJSON("/mapobjects/" + name, handleMapObjects);
+            $.getJSON("/encounters/" + name, handleEncounters);
             $.getJSON("/position/" + name, handlePosition);
         }
 
@@ -91,6 +92,12 @@
                 allNearby(tmpNearby);
                 allCatchable(tmpCatchable);
             }
+        }
+
+        function handleEncounters(data) {
+            _.forOwn(data, function(value, id) {
+                createEncounterMarker(value.encounter);
+            });
         }
 
         function handlePosition(data) {

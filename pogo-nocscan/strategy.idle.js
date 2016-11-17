@@ -113,6 +113,6 @@ module.exports = function(account, config) {
         handleNearby: handleNearby,
         handleCatchable: handleCatchable,
         setLogger: function(nl) { logger = nl; },
-        setParent: function(o) { parent = p; }
+        setParent: function(p) { parent = p; }
     }
 }

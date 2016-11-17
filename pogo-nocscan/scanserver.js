@@ -28,6 +28,7 @@ function getByUsername(username) {
         return null;
 
     scanner = scanner[0];
+    return scanner;
 }
 
 // Create app.
@@ -82,6 +83,19 @@ app.get('/mapobjects/:username', function(req, res) {
 
     if(scanner != null)
         res.send(scanner.getActiveScanner().getLastMapObjects());
+    else
+        res.send([]);
+});
+
+
+/**
+ * Fetch latest encounters for account. 
+ */
+app.get('/encounters/:username', function(req, res) {    
+    var scanner = getByUsername(req.params.username);
+
+    if(scanner != null)
+        res.send(scanner.getActiveScanner().getKnownEncounters());
     else
         res.send([]);
 });
