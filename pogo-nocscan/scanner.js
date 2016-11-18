@@ -66,13 +66,14 @@ module.exports = function(config) {
      */
     function checkIP() {
         // Get a non proxied request to find our clearnet IP.
-        request('http://ipinfo.io', function(error, res, body) {
+        request('https://api.ipify.org/?format=json', function(error, res, body) {
             try {
                 clearIPInfo = JSON.parse(body);
                 logger.info("Looks like our current IP is:", clearIPInfo.ip);
             } catch(err) {
                 logger.error("Error checking host IP:", err);
                 checkIP();
+                return;                
             }   
 
             startRandomScanner();
@@ -167,11 +168,12 @@ module.exports = function(config) {
 
             logger.info("Testing proxy:", tProxy);
 
-            // Do a request to IPInfo under the proxy.
+            // Do a request to ipify under the proxy.
             request({
                 method: "GET",
-                url: 'http://ipinfo.io',
-                proxy: tProxy
+                url: 'https://api.ipify.org/?format=json',
+                proxy: tProxy,
+                timeout: 10
             }, function(error, res, body) {
 
                 // If we get an HTTP error, reject the promise.

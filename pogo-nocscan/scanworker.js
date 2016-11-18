@@ -276,7 +276,7 @@ module.exports = function(account, timeToRun, strategy, logger) {
             logger.info("  " + nearbyCount + " nearby pokemon.");
 
             if(catchableCount == 0 && nearbyCount == 0)
-                logger.error("Possible softban.");
+                logger.error("Possible softban. (user:" + account.username + ")");
 
             // Set the timeout to scan again.
             scanTimeout = timeoutHelper.setTimeout(account.username + "-scan", performScan, scanDelay * 1000);
