@@ -16,7 +16,46 @@ node scanserver.js
 
 ### Configuration
 
-[TBD]
+When `pogo-nocscan` is loaded, all files in the root folder beginning with `config.` and ending in `.js` are treaded as config files to be loaded. Configuration files are plain javscript files that expose a configuration object or array of configuration objects through `module.exports`. The example configuration file shows this in action.
+
+A single configuration object can have one or more accounts that scan at a given location. These accounts are used one at a time, if you want to have simultaneous accounts, you should have multiple configurations (via multiple js files, or by exposing an array of configuration objects).
+
+At its simplest, a configuration file can look like this:
+
+```javascript
+var config = {
+    "name": "example",
+    "huntIds": [],
+    "accounts": [
+        {
+            "username": "exampleptcuser1",
+            "password": "examplepass",
+            "locator": {
+                "plugin": "static",
+                "config": {"lat": -34.009493, "lng": -118.496862}
+            },
+            "hours": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24],
+            "allowNoProxy": true 
+        }
+    ], 
+    "notifiers": []
+};
+
+module.exports = config;
+```
+
+The above configuration places a worker at the Santa Monica Pier, does not send any notifications and does not create sub-workers to scan for anything nearby.
+
+#### The "configuration" object.
+
+The table below shows the different properties a "configuration" object (as shown in the example above) can have.
+
+Property | Type | Description | Required?
+--- | --- | --- | ---
+`name` | string | Basic identifier for the config (used in logging) | yes
+`huntIds` | Array<Number> | List of pokemon id numbers used for hunting and notifications | yes (can be empty)
+`accounts` | Array<Account> | List of accounts to scan with | yes
+`notifiers` | Array<Notifier> | List of notification methods, for sending notificatison | yes (can be empty)
 
 ### Plugin Configuration
 
