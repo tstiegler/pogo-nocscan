@@ -138,8 +138,7 @@ module.exports = function(config) {
                 // Check if we have a reject method on the proxy resolver. Call it.
                 if(!(typeof account.proxy === 'string') && "reject" in account.proxy)
                     account.proxy.reject();
-            })
-            .catch(function(e) {
+
                 logger.error("Failed proxy check, moving to next account...");
                 logger.error(e);
 
