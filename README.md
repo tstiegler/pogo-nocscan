@@ -89,7 +89,7 @@ var proxyResolver = require('./proxyresolver.array.js')([
 ]);
 
 
-// Default config, notifying on slack for a few rares.
+// Default config.
 var config = {
     "name": "example",
     "huntIds": [],
