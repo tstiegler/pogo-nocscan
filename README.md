@@ -57,6 +57,20 @@ Property | Type | Description | Required?
 `accounts` | Array<Account> | List of accounts to scan with | yes
 `notifiers` | Array<Notifier> | List of notification methods, for sending notificatison | yes (can be empty)
 
+### The "account" object.
+
+Each account can have different paramaters apart from just username and password. Account objects are specified below.
+
+Property | Type | Description | Required?
+--- | --- | --- | ---
+`username` | string | PTC username | yes
+`password` | string | PTC password | yes
+`locator` | Locator | The locator plugin configuration, used for getting scan GPS locations | yes
+`hours` | Array<Number> | A list of hours of the day this account can run during | yes (use 1...24 to run 24/7)
+`proxy` | string \| ProxyResolver | If string, a http proxy url to use for connections. More info about ProxyResolvers later | no
+`allowNoProxy` | bool | If set to true, this will allow accounts to operate without using a proxy | no (default: false)
+`torconfig` | TorConfig | Configuration options for a TOR instance. Used to send new circuit signals if a circuit can't connect | no
+
 ### Plugin Configuration
 
 There are two different types of plugins, locators and notifers, each using the same configuration layout of:
