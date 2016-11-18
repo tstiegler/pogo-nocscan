@@ -16,7 +16,7 @@ node scanserver.js
 
 ### Configuration
 
-When `pogo-nocscan` is loaded, all files in the root folder beginning with `config.` and ending in `.js` are treaded as config files to be loaded. Configuration files are plain javscript files that expose a configuration object or array of configuration objects through `module.exports`. The example configuration file shows this in action.
+When `pogo-nocscan` is loaded, all files in the root folder beginning with `config.` and ending in `.js` are treated as config files to be loaded. Configuration files are plain javscript files that expose a configuration object or array of configuration objects through `module.exports`. The example configuration file shows this in action.
 
 A single configuration object can have one or more accounts that scan at a given location. These accounts are used one at a time, if you want to have simultaneous accounts, you should have multiple configurations (via multiple js files, or by exposing an array of configuration objects).
 
