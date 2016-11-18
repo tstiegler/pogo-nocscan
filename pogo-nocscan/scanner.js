@@ -140,7 +140,6 @@ module.exports = function(config) {
                     account.proxy.reject();
 
                 logger.error("Failed proxy check, moving to next account...");
-                logger.error(e);
 
                 if("torconfig" in account)
                     torHelper.newCircuit(function() { setTimeout(startRandomScanner, 1000); }, account, logger);
