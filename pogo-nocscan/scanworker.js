@@ -25,8 +25,9 @@ module.exports = function(account, timeToRun, strategy, logger) {
 
     var scanTimeout;
     var lastMapObjects;
-    var scanDelay = 30;
+    var scanDelay = 30;    
     var knownEncounters = {};
+    
  
     // ------------------------------------------------------------------------
 
