@@ -32,7 +32,7 @@ var config = {
             "password": "examplepass",
             "locator": {
                 "plugin": "static",
-                "config": {"lat": -34.009493, "lng": -118.496862}
+                "config": { "lat": -34.009493, "lng": -118.496862 }
             },
             "hours": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24],
             "allowNoProxy": true 
@@ -55,9 +55,9 @@ Property | Type | Description | Required?
 `name` | string | Basic identifier for the config (used in logging) | yes
 `huntIds` | Array<Number> | List of pokemon id numbers used for hunting and notifications | yes (can be empty)
 `accounts` | Array<Account> | List of accounts to scan with | yes
-`notifiers` | Array<Notifier> | List of notification methods, for sending notificatison | yes (can be empty)
+`notifiers` | Array<Notifier> | List of notification methods, for sending notifications | yes (can be empty)
 
-### The "account" object.
+#### The "account" object.
 
 Each account can have different paramaters apart from just username and password. Account objects are specified below.
 
@@ -70,6 +70,52 @@ Property | Type | Description | Required?
 `proxy` | string \| ProxyResolver | If string, a http proxy url to use for connections. More info about ProxyResolvers later | no
 `allowNoProxy` | bool | If set to true, this will allow accounts to operate without using a proxy | no (default: false)
 `torconfig` | TorConfig | Configuration options for a TOR instance. Used to send new circuit signals if a circuit can't connect | no
+
+#### ProxyResolvers
+
+Perhaps you don't want to use just a single proxy address per account. Maybe you want it randomly selected via a proxy address pool. This is accomplished via a proxy resolver.
+
+A proxy resolver is merely an object with three methods: `next`, `get` and `reject`. The `next` method should pick the next proxy in the list and return it, the `get` method should return the previously picked proxy and the `reject` method should handle malfunctioning proxies.
+
+I say _should_ because proxy resolvers are entirely customizable, you can create your own and inject them into your configurations. However, an example one comes included in `proxyresolver.array.js`. Below is an example for using it:
+
+```javascript
+// Proxy resolver for all accounts.
+var proxyResolver = require('./proxyresolver.array.js')([
+    "http://32.32.32.32:8080",
+    "http://64.64.64.64:8080",
+    "http://96.96.96.96:8080",
+    "http://128.128.128.128:8080"
+]);
+
+
+// Default config, notifying on slack for a few rares.
+var config = {
+    "name": "example",
+    "huntIds": [],
+    "accounts": [
+        {
+            "username": "exampleptcuser1",
+            "password": "examplepass",
+            "locator": { 
+                "plugin": "static", 
+                "config": { "lat": -34.009493, "lng": -118.496862 } 
+            },
+            "hours": [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22],
+            "proxy": proxyResolver      
+        },
+    ], 
+    "notifiers": []
+};
+
+module.exports = config;
+```
+
+The above code will use the array ProxyResolver, which selects a proxy from the given array by random. If a proxy is malfunctioning, it will exclude it from being able to be chosen.
+
+### huntIds and Notifications
+
+[TBD]
 
 ### Plugin Configuration
 
