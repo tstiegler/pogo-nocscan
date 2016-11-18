@@ -145,6 +145,15 @@ module.exports = function(config) {
                     torHelper.newCircuit(function() { setTimeout(startRandomScanner, 1000); }, account, logger);
                 else 
                     setTimeout(startRandomScanner, 1000);
+            })
+            .catch(function(e) {
+                logger.error("Exception during proxy check, moving to next account...");
+                legger.error(e);
+
+                if("torconfig" in account)
+                    torHelper.newCircuit(function() { setTimeout(startRandomScanner, 1000); }, account, logger);
+                else 
+                    setTimeout(startRandomScanner, 1000);
             });
     }
 
