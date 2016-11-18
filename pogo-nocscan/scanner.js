@@ -183,8 +183,7 @@ module.exports = function(config) {
             request({
                 method: "GET",
                 url: 'https://api.ipify.org/?format=json',
-                proxy: tProxy,
-                timeout: 10
+                proxy: tProxy
             }, function(error, res, body) {
 
                 // If we get an HTTP error, reject the promise.
