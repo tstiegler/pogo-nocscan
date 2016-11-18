@@ -18,7 +18,7 @@ node scanserver.js
 
 When `pogo-nocscan` is loaded, all files in the root folder beginning with `config.` and ending in `.js` are treated as config files to be loaded. Configuration files are plain javscript files that expose a configuration object or array of configuration objects through `module.exports`. The example configuration file shows this in action.
 
-A single configuration object can have one or more accounts that scan at a given location. These accounts are used one at a time, if you want to have simultaneous accounts, you should have multiple configurations (via multiple js files, or by exposing an array of configuration objects).
+A single configuration object can have one or more accounts that scan at a given location. These accounts are used one at a time. If you want to have simultaneous accounts, you should have multiple configurations (via multiple js files, or by exposing an array of configuration objects).
 
 At its simplest, a configuration file can look like this:
 
@@ -71,6 +71,7 @@ Property | Type | Description | Required?
 `proxy` | string \| ProxyResolver | If string, a http proxy url to use for connections. More info about ProxyResolvers later | no
 `allowNoProxy` | bool | If set to true, this will allow accounts to operate without using a proxy | no (default: false)
 `torconfig` | TorConfig | Configuration options for a TOR instance. Used to send new circuit signals if a circuit can't connect | no
+`huntScanners` | Array<Account> | List of accounts to use as sub-scanners for hunting nearby pokemon as listed in `huntIds` | no
 
 #### ProxyResolvers
 
@@ -116,7 +117,15 @@ The above code will use the array ProxyResolver, which selects a proxy from the 
 
 ### huntIds and Notifications
 
-[TBD]
+pogo-nocscan has the ability to send notifications when a pokemon is in either the nearby or catchable state. 
+
+The nearby notification will fire when a Pokemon is within 200 meters of the scan point. This notification will contain a link which will show the nearby radius, as well as the s2 cell bounds. This alone can allow for some rudimentary tracking/
+
+If the account is setup with the `huntScanners` property, the scanner will start some sub-workers that will navigate that s2 cell to search for the pokemon. Once it is found, it will send a notification with the exact coordinates of the Pokemon.
+
+Currently, there are three different types of notification methods (notifier plugins). These being email, pushover.net and Slack.
+
+If you are scanning an area with a large amount of accounts simultaneously (eg: a beehive scann), then some specific concerns need to be addressed. For example, you do not need to set `huntScanners` for any account, because hunter scanners are uneccesary. You will also need to set `catchableOnly` on each account's configuration object, so you don't get the "nearby" notificatsion, only the "catchable" notifications.
 
 ### UI Configuration
 
