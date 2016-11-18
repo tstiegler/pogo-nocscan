@@ -119,13 +119,13 @@ The above code will use the array ProxyResolver, which selects a proxy from the 
 
 pogo-nocscan has the ability to send notifications when a pokemon is in either the nearby or catchable state. 
 
-The nearby notification will fire when a Pokemon is within 200 meters of the scan point. This notification will contain a link which will show the nearby radius, as well as the s2 cell bounds. This alone can allow for some rudimentary tracking/
+The nearby notification will fire when a Pokemon is within 200 meters of the scan point. This notification will contain a link which will show the nearby radius, as well as the s2 cell bounds. This alone can allow for some rudimentary tracking.
 
 If the account is setup with the `huntScanners` property, the scanner will start some sub-workers that will navigate that s2 cell to search for the pokemon. Once it is found, it will send a notification with the exact coordinates of the Pokemon.
 
 Currently, there are three different types of notification methods (notifier plugins). These being email, pushover.net and Slack.
 
-If you are scanning an area with a large amount of accounts simultaneously (eg: a beehive scann), then some specific concerns need to be addressed. For example, you do not need to set `huntScanners` for any account, because hunter scanners are uneccesary. You will also need to set `catchableOnly` on each account's configuration object, so you don't get the "nearby" notificatsion, only the "catchable" notifications.
+If you are scanning an area with a large amount of accounts simultaneously (eg: a beehive scan), then some specific concerns need to be addressed. For example, you do not need to set `huntScanners` for any account, because hunter scanners are uneccessary for beehive scans. You will also need to set `catchableOnly` on each account's configuration object, so you don't get the "nearby" notificatsion, only the "catchable" notifications.
 
 ### UI Configuration
 
@@ -215,3 +215,7 @@ The `webhookConfig` parameter can contain any parameter specified in the [Slack 
 ### Included Sample configurations
 
 [TBD]
+
+## Credits
+
+A huge amount of credit for this scanner goes to the guys behind [pogobuf](https://github.com/cyraxx/pogobuf), as well as the whole RE team @ pogodev. Without them, this project would not exist.
