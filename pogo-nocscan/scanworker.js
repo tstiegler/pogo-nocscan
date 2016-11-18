@@ -21,11 +21,13 @@ module.exports = function(account, timeToRun, strategy, logger) {
 
     var finishWorkerCallback;
     var isAuthenticated = false;
-    var client = getClient();
 
+    var client;
     var scanTimeout;
     var lastMapObjects;
-    var scanDelay = 30;    
+    var workerProxy;
+
+    var scanDelay = 30;
     var knownEncounters = {};
     
  
@@ -36,6 +38,15 @@ module.exports = function(account, timeToRun, strategy, logger) {
      */
     function startWorker() {
         logger.info("Logging in with: ", account.username);
+
+        // Get the current proxy.
+        if("proxy" in account && (typeof account.proxy === 'string'))
+            workerProxy = account.proxy;
+        else if("proxy" in account)
+            workerProxy = account.proxy.get();
+
+        // Get the client.
+        client = getClient();
 
         // Login.
         getLoginMethod().login(account.username, account.password)
@@ -119,12 +130,8 @@ module.exports = function(account, timeToRun, strategy, logger) {
      */
     function getClient() {
         var result = new pogobuf.Client();
-        
-        if("proxy" in account && (typeof account.proxy === 'string'))
-            result.setProxy(account.proxy);
-        else if("proxy" in account)
-            result.setProxy(account.proxy.get());
-            
+        result.setProxy(workerProxy);
+
         return result;        
     }
 
@@ -133,11 +140,7 @@ module.exports = function(account, timeToRun, strategy, logger) {
      */
     function getLoginMethod() {
         var result = new pogobuf.PTCLogin();
-
-        if("proxy" in account && (typeof account.proxy === 'string'))
-            result.setProxy(account.proxy);
-        else if("proxy" in account)
-            result.setProxy(account.proxy.get());
+        result.setProxy(workerProxy);
 
         return result;
     }
