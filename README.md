@@ -54,9 +54,9 @@ Property | Type | Description | Required?
 --- | --- | --- | ---
 `name` | string | Basic identifier for the config (used in logging) | yes
 `catchableOnly` | bool | If true, only send notifications for pokemon in catchable range (no nearby notifications) | no (default: false)
-`huntIds` | Array<Number> | List of pokemon id numbers used for hunting and notifications | yes (can be empty)
-`accounts` | Array<Account> | List of accounts to scan with | yes
-`notifiers` | Array<Notifier> | List of notification methods, for sending notifications | yes (can be empty)
+`huntIds` | Array(Number) | List of pokemon id numbers used for hunting and notifications | yes (can be empty)
+`accounts` | Array(Account) | List of accounts to scan with | yes
+`notifiers` | Array(Notifier) | List of notification methods, for sending notifications | yes (can be empty)
 
 #### The "account" object.
 
@@ -67,11 +67,11 @@ Property | Type | Description | Required?
 `username` | string | PTC username | yes
 `password` | string | PTC password | yes
 `locator` | Locator | The locator plugin configuration, used for getting scan GPS locations | yes
-`hours` | Array<Number> | A list of hours of the day this account can run during | yes (use 1...24 to run 24/7)
+`hours` | Array(Number) | A list of hours of the day this account can run during | yes (use 1...24 to run 24/7)
 `proxy` | string \| ProxyResolver | If string, a http proxy url to use for connections. More info about ProxyResolvers later | no
 `allowNoProxy` | bool | If set to true, this will allow accounts to operate without using a proxy | no (default: false)
 `torconfig` | TorConfig | Configuration options for a TOR instance. Used to send new circuit signals if a circuit can't connect | no
-`huntScanners` | Array<Account> | List of accounts to use as sub-scanners for hunting nearby pokemon as listed in `huntIds` | no
+`huntScanners` | Array(Account) | List of accounts to use as sub-scanners for hunting nearby pokemon as listed in `huntIds`. These accounts inherit the properties from the above accounts, so you only need to set the `username` and `password` properties on them. | no
 
 #### ProxyResolvers
 
