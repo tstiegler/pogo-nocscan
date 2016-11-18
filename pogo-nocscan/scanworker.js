@@ -12,6 +12,7 @@ var gpsHelper       = require("./helper.gps.js");
 var tutorialHelper  = require("./helper.tutorial.js");
 var timeoutHelper   = require("./helper.timeout.js");
 var torHelper       = require("./helper.tor.js");
+var speedBanHelper  = require("./helper.speedban.js");
 
 /**
  * Start scanner with a given location.
@@ -63,12 +64,11 @@ module.exports = function(account, timeToRun, strategy, logger) {
                 client.setAuthInfo('ptc', token);            
 
                 strategy.getPosition(function(position) {
-                    position = gpsHelper.fuzzedLocation(position);
-                    logger.info("Setting position to:", position);
-                    client.setPosition(position.lat, position.lng);
-                    scanTimeout = timeoutHelper.setTimeout(account.username + "-scan", initClientStep1, 15000);
+                    safeSetPosition(position, function() {
+                        scanTimeout = timeoutHelper.setTimeout(account.username + "-scan", initClientStep1, 15000);
+                    });
                 }, function() {
-                    scanTimeout = timeoutHelper.setTimeout(account.username + "-scan", initClientStep1, scanDelay * 1000);
+                    scanTimeout = timeoutHelper.setTimeout(account.username + "-scan", startWorker, scanDelay * 1000);
                 }); 
             });
 
@@ -89,6 +89,23 @@ module.exports = function(account, timeToRun, strategy, logger) {
 
         if(finishWorkerCallback != null)
             finishWorkerCallback();
+    }
+
+
+    /**
+     * Set position safely, avoid softbans.
+     */
+    function safeSetPosition(position, callback) {
+        position = gpsHelper.fuzzedLocation(position);
+
+        if(speedBanHelper.checkPosition(account, position, logger)) {
+            logger.info("Setting position to:", position);
+            client.setPosition(position.lat, position.lng);
+            callback();
+        } else {
+            logger.info("Not sending loction to avoid speed ban.");
+            timeoutHelper.setTimeout(account.username + "-speedban", function() { safeSetPosition(position, callback); }, 60000);
+        }        
     }
 
 
@@ -208,10 +225,9 @@ module.exports = function(account, timeToRun, strategy, logger) {
     function performScan() {
         // Move to the next location.
         strategy.getPosition(function(position) {
-            position = gpsHelper.fuzzedLocation(position);
-            logger.info("Setting position to: ", position);
-            client.setPosition(position.lat, position.lng);
-            checkNearby(position); 
+            safeSetPosition(position, function() {
+                checkNearby(position); 
+            });
         }, function() {
             scanTimeout = timeoutHelper.setTimeout(account.username + "-scan", performScan, scanDelay * 1000);
         });
@@ -299,9 +315,10 @@ module.exports = function(account, timeToRun, strategy, logger) {
     self = {
         startWorker: startWorker,
         addEncounter: addEncounter,
+        finish: finish,
         finishWorkerCallback: function(cb) {
             finishWorkerCallback = cb;
-        },
+        },        
         getLastMapObjects: function() { return lastMapObjects; },
         getKnownEncounters: function() { return knownEncounters; },
         getPosition: function() { 

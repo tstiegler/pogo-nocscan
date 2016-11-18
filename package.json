@@ -33,6 +33,7 @@
     "pushover-notifications": "latest",
     "nodemailer": "latest",
     "winston": "latest",
-	"lodash": "latest"
+    "node-beehive-cluster": "git+https://github.com/tstiegler/node-beehive-cluster.git",
+    "lodash": "latest"
   }
 }

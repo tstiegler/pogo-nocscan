@@ -21,7 +21,7 @@ function proxyResolverFactory(proxyList) {
         }
 
         // Pick one at random.
-        currentProxy = nonrejectedProxies[Math.floor(Math.random() * nonrejectedProxies.length)];
+        currentProxy = nonrejectedProxies[Math.floor(Math.random() * nonrejectedProxies.length)].trim();
         return currentProxy;
     }
 

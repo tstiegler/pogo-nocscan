@@ -6,6 +6,9 @@ var s2          = require('s2-geometry').S2;
 var pogobuf     = require('pogobuf');
 var winston     = require('winston');    
 
+var huntStratFactory    = require("./strategy.hunt.js");
+var scanWorkerFactory   = require("./scanworker.js");
+
 /**
  * Scan strategy object, will idle on a configured location and report on
  * nearby sightings. (TODO: Eventually this will spin up sub-workers to scan
@@ -13,10 +16,15 @@ var winston     = require('winston');
  */
 module.exports = function(account, config) {
     var parent;
+    var self;
 
     var warningNotifications = [];
     var catchableNotifications = [];
     var logger = winston;
+
+    var huntQueue = [];
+    var huntWorkers = [];
+    var huntersActive = false;
 
     // ------------------------------------------------------------------------
 
@@ -36,7 +44,9 @@ module.exports = function(account, config) {
             return;
 
         // Check all nearby pokemon.
-        _.each(nearby_pokemons, function(poke) {        
+        _.each(nearby_pokemons, function(poke) {
+            poke.cellKey = cellKey;
+
             var pokemonId = poke.pokemon_id;
             var pokemonName = pogobuf.Utils.getEnumKeyByValue(POGOProtos.Enums.PokemonId, poke.pokemon_id);
             var encounterId = poke.encounter_id;     
@@ -59,6 +69,10 @@ module.exports = function(account, config) {
                         // Send notifications immediately.
                         _.each(config.notifiers, function(notifier) { notifier.sendMessage(pokemonName + " nearby! " + displayLink); });
                         logger.info("Nearby: " + pokemonName);
+
+                        // Add to hunt queue.
+                        if("huntScanners" in account && account.huntScanners.length > 0)
+                            huntQueue.push(poke);
                     }
                 }
             });
@@ -72,6 +86,7 @@ module.exports = function(account, config) {
     function handleCatchable(catchable_pokemons, cellKey) {
         // Check all nearby pokemon.
         _.each(catchable_pokemons, function(poke) {
+            poke.cellKey = cellKey;
 
             // Add to the parent's known encounters.
             if(parent)
@@ -86,7 +101,7 @@ module.exports = function(account, config) {
                 lng: poke.longitude
             };
 
-            // Check for huntable pokemon.
+            // Check for catchable pokemon that we may be interested in.
             _.each(config.huntIds, function(id) { 
                 if(pokemonId == id) {
                     var hasWarned = false;
@@ -107,12 +122,71 @@ module.exports = function(account, config) {
     }
 
 
+    /**
+     * Poll for hunt targets.
+     */
+    function huntPoll() {
+        if(!huntersActive && huntQueue.length > 0) {
+            var poke = huntQueue.shift();
+            var encounterId = poke.encounter_id;
+            var s2bounds = s2.S2Cell.FromHilbertQuadKey(poke.cellKey).getCornerLatLngs();
+
+            var hasWarned = false;
+            _.each(catchableNotifications, function(eid) { if(encounterId == eid) hasWarned = true; });
+
+            if(!hasWarned) {
+                huntersActive = true;
+                
+                _.each(account.huntScanners, function(scanAccount) {
+                    // Create the hunt strategy instance for this account.
+                    var huntstrat = huntStratFactory(scanAccount, config);
+                    var huntlogger = new (winston.Logger)({
+                        transports: [
+                            new (winston.transports.Console)({
+                                formatter: function(options) {
+                                    var result = '';
+                                    result += (config.name ? ("[" +  config.name + "-" + scanAccount.username + "] ") : '');
+                                    result += options.level.toUpperCase() + ': ' + (options.message ? options.message : '');
+                                    result += (options.meta && Object.keys(options.meta).length ? ' ' + JSON.stringify(options.meta) : '' );
+
+                                    return result;                    
+                                },
+                                level: winston.level
+                            })
+                        ]
+                    });
+
+                    huntstrat.setLogger(huntlogger);
+                    huntstrat.setParent(self);
+
+                    // TODO: set start location and waypoints.
+
+                    // Create worker.
+                    var scanWorker = scanWorkerFactory(scanAccount, 1080, huntstrat, huntlogger);
+                    scanWorker.startWorker();
+
+                    // Keep track of workers.
+                    huntWorkers.push(scanWorker);
+                })
+            }
+        }
+    }
+
+    /**
+     * Handle getting a hunt result.
+     */
+    function huntResult() {
+
+    }
+
+
     // Return module.
-    return {
+    self = {
         getPosition: getPosition,
         handleNearby: handleNearby,
         handleCatchable: handleCatchable,
         setLogger: function(nl) { logger = nl; },
         setParent: function(p) { parent = p; }
     }
+    return self;
 }

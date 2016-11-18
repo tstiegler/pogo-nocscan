@@ -53,6 +53,7 @@ The table below shows the different properties a "configuration" object (as show
 Property | Type | Description | Required?
 --- | --- | --- | ---
 `name` | string | Basic identifier for the config (used in logging) | yes
+`catchableOnly` | bool | If true, only send notifications for pokemon in catchable range (no nearby notifications) | no (default: false)
 `huntIds` | Array<Number> | List of pokemon id numbers used for hunting and notifications | yes (can be empty)
 `accounts` | Array<Account> | List of accounts to scan with | yes
 `notifiers` | Array<Notifier> | List of notification methods, for sending notifications | yes (can be empty)
@@ -114,6 +115,10 @@ module.exports = config;
 The above code will use the array ProxyResolver, which selects a proxy from the given array by random. If a proxy is malfunctioning, it will exclude it from being able to be chosen.
 
 ### huntIds and Notifications
+
+[TBD]
+
+### UI Configuration
 
 [TBD]
 
@@ -197,3 +202,7 @@ The configuration expected is as follows:
 ```
 
 The `webhookConfig` parameter can contain any parameter specified in the [Slack Incoming Webhook API Spec](https://api.slack.com/incoming-webhooks).
+
+### Included Sample configurations
+
+[TBD]
