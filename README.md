@@ -43,8 +43,7 @@ The configuration expected is as follows:
 
 ##### static
 
-The `static` locator plugin will just use the same GPS location repeatedly. However you can add a random fuzzing amount to the coordinates so that you aren't using the exact same coordinate every single time.
-
+The `static` locator plugin will just use the same GPS location repeatedly. However, pogo-nocscan employs some very minor randomization to the GPS coordinates so as to not repeatedly send the same coordinates to the Niantic API.
 The configuration expected is as follows:
 
 ```json
