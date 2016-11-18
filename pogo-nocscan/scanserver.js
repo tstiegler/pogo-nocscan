@@ -3,19 +3,17 @@
  * a web API and frontend UI.
  */
 
-var express     = require('express');
-var _           = require('lodash');
-var winston     = require('winston');
+var express         = require('express');
+var _               = require('lodash');
+var winston         = require('winston');
 
-var c           = require("./constants.js");
-var scanner     = require("./scanner.js");
+var c               = require("./constants.js");
+var scannerFactory  = require("./scanner.js");
 
 // Configuration
 // ============================================================================
 
-var scanners = [
-    scanner(require('./config.example.js'))
-];
+var configs = require("./configloader.js")();
 
 var uiconfig = {
     mode: c.UI_MODE_SHOW_ACCOUNTS,
@@ -26,6 +24,10 @@ var uiconfig = {
 };
 
 // ----------------------------------------------------------------------------
+
+// Convert all configurations to scanners.
+var scanners = [];
+_.each(configs, function(item) { scanners.push(scannerFactory(item)); })
 
 // Create app.
 var app = express();

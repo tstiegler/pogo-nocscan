@@ -12,6 +12,8 @@ cd pogo-nocscan
 node scanserver.js
 ```
 
+4. Navigate to `http://127.0.0.1:3000`
+
 ### Configuration
 
 [TBD]
