@@ -7,6 +7,13 @@ var defaultLocator = {
     }
 };
 
+// Proxy resolver for all accounts.
+var proxyResolver = require('./proxyresolver.array.js')([
+    "http://32.32.32.32:8080",
+    "http://64.64.64.64:8080",
+    "http://96.96.96.96:8080",
+    "http://128.128.128.128:8080"
+]);
 
 // Default config, notifying on slack for a few rares.
 var config = {
@@ -19,11 +26,18 @@ var config = {
     ],
     "accounts": [
         {
-            "username": "exampleptcuser",
+            "username": "exampleptcuser1",
             "password": "examplepass",
             "locator": defaultLocator,
             "hours": [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22],
-            "proxy": "http://192.192.192.192:8080"       
+            "proxy": proxyResolver      
+        },
+        {
+            "username": "exampleptcuser2",
+            "password": "examplepass",
+            "locator": defaultLocator,
+            "hours": [7, 8, 9, 10, 11, 12, 13, 14, 15],
+            "proxy": proxyResolver      
         }
     ], 
     "notifiers": [

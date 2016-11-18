@@ -123,7 +123,7 @@ module.exports = function(config) {
         // Check the account's proxy, then run an idling scanner with it.
         logger.info("Using account '" + account.username + "' for " + (timeToRun / 60000) + " minutes.");
         proxyCheck(account)
-            .then(function() { 
+            .then(function proxyresolve() { 
                 var strategy = strategyIdleFactory(account, config);
                 strategy.setLogger(logger);
 
@@ -134,6 +134,10 @@ module.exports = function(config) {
 
                 strategy.setParent(activeScanWorker);
                 activeScanWorker.startWorker(); 
+            }, function proxyreject() {
+                // Check if we have a reject method on the proxy resolver. Call it.
+                if(!(typeof account.proxy === 'string') && "reject" in account.proxy)
+                    account.proxy.reject();
             })
             .catch(function(e) {
                 logger.error("Failed proxy check, moving to next account...");
@@ -183,7 +187,7 @@ module.exports = function(config) {
 
                     if(res != null && "statusCode" in res)
                         logger.info("Status Code:", res.statusCode);
-                
+
                     reject();
                     return;
                 }
