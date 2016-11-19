@@ -23,7 +23,7 @@ var pushoverNotifier = function(pushoverConfig) {
         // Send over the push notification.
         p.send( msg, function( err, result ) {
             if ( err ) {
-                logger.info("Error pushin message");
+                logger.info("Error pushing message");
             }
         });       
     }

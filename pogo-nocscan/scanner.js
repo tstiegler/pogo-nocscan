@@ -129,6 +129,7 @@ module.exports = function(config) {
 
                 activeScanWorker = scanWorkerFactory(account, timeToRun, strategy, logger);
                 activeScanWorker.finishWorkerCallback(function() {
+                    activeScanWorker = null;
                     setTimeout(startRandomScanner, 1000);
                 })
 
