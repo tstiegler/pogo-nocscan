@@ -138,6 +138,9 @@ module.exports = function(account, config) {
             if(!hasWarned) {
                 huntersActive = true;
                 
+                // Get list of scan points for the given cell and divide them amongst the workers.
+                var splitBeehive = s2beehiveHelper.distributeS2Beehive(s2bounds, account.huntScanners.length);
+
                 _.each(account.huntScanners, function(scanAccount) {
                     // Create the hunt strategy instance for this account.
                     var huntstrat = huntStratFactory(scanAccount, config);
@@ -160,11 +163,7 @@ module.exports = function(account, config) {
                     huntstrat.setLogger(huntlogger);
                     huntstrat.setParent(self);
 
-                    // Get list of scan points for the given cell and divide them amongst the workers.
-                    var s2scanBeehive = s2beehiveHelper.cornersToBeehive(s2bounds);
-
-                    // TODO: Split array amongst workers.
-
+                    // TODO: Set waypoints for hunter.
 
                     // Create worker.
                     var scanWorker = scanWorkerFactory(scanAccount, 1080, huntstrat, huntlogger);
