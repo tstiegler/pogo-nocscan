@@ -8,6 +8,7 @@ var winston     = require('winston');
 
 var huntStratFactory    = require("./strategy.hunt.js");
 var scanWorkerFactory   = require("./scanworker.js");
+var s2beehiveHelper     = require("./helper.s2beehive.js");
 
 /**
  * Scan strategy object, will idle on a configured location and report on
@@ -159,7 +160,11 @@ module.exports = function(account, config) {
                     huntstrat.setLogger(huntlogger);
                     huntstrat.setParent(self);
 
-                    // TODO: set start location and waypoints.
+                    // Get list of scan points for the given cell and divide them amongst the workers.
+                    var s2scanBeehive = s2beehiveHelper.cornersToBeehive(s2bounds);
+
+                    // TODO: Split array amongst workers.
+
 
                     // Create worker.
                     var scanWorker = scanWorkerFactory(scanAccount, 1080, huntstrat, huntlogger);
