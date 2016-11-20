@@ -133,7 +133,7 @@ module.exports = function(config) {
                     setTimeout(startRandomScanner, 1000);
                 })
 
-                strategy.setParent(activeScanWorker);
+                strategy.setWorker(activeScanWorker);
                 activeScanWorker.startWorker(); 
             }, function proxyreject() {
                 // Check if we have a reject method on the proxy resolver. Call it.

@@ -16,9 +16,10 @@ var s2beehiveHelper     = require("./helper.s2beehive.js");
  * new workers to find encounters (specified in config.huntIds) in nearby.
  */
 module.exports = function(account, config) {
-    var parent;
     var self;
-
+    var parent;
+    var worker;
+    
     var warningNotifications = [];
     var catchableNotifications = [];
     var logger = winston;
@@ -106,9 +107,9 @@ module.exports = function(account, config) {
         _.each(catchable_pokemons, function(poke) {
             poke.cellKey = cellKey;
 
-            // Add to the parent's known encounters.
-            if(parent)
-                parent.addEncounter(poke);
+            // Add to the workers's known encounters.
+            if(worker)
+                worker.addEncounter(poke);
 
             var pokemonId = poke.pokemon_id;
             var pokemonName = pogobuf.Utils.getEnumKeyByValue(POGOProtos.Enums.PokemonId, poke.pokemon_id);
@@ -144,11 +145,16 @@ module.exports = function(account, config) {
      * Poll for hunt targets.
      */
     function huntPoll() {
-        // TODO: Account for the posibility that the encounter might despawn before
-        // hunting is finished.
-        // ie: check if all huntScanners are finished/stale, then manually clear
-        // the array and set huntersActive back to false.
+        // Check if all current workers are finished (can happen if the hunted
+        // pokemon despawns before we find it). If so, manually refresh
+        // the hunting vars.
+        if(_.find(huntWorkers, function(worker) { return !worker.isFinished() }) == null) {
+            huntWorkers = [];
+            huntersActive = false;
+        }
 
+        // Check if we have an available encounter to hunt for.
+        
         if(!huntersActive && huntQueue.length > 0) {
             var poke = huntQueue.shift();
             var encounterId = poke.encounter_id;
@@ -189,6 +195,7 @@ module.exports = function(account, config) {
 
                     // Create worker.
                     var scanWorker = scanWorkerFactory(scanAccount, 1080000, huntstrat, huntlogger);
+                    huntstrat.setWorker(scanWorker);
                     scanWorker.startWorker();
 
                     // Keep track of workers.
@@ -223,7 +230,8 @@ module.exports = function(account, config) {
         huntResult: huntResult,
         getHuntWorkers: function() { return huntWorkers; },
         setLogger: function(nl) { logger = nl; },
-        setParent: function(p) { parent = p; }
+        setParent: function(p) { parent = p; },
+        setWorker: function(w) { worker = w; }
     }
     return self;
 }

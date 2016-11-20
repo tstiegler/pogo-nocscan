@@ -10,6 +10,7 @@ function checkPosition(account, position, logger) {
         var logEntry = speedLog[account.username];
         var timespan = timestamp - logEntry.timestamp;
 
+        // TODO: Find out if this is actually accurate.
         var timespanHours = timespan / 1000 / 60 / 60;
         var distanceKm = gpsHelper.haversine(logEntry.position.lat, logEntry.position.lng, position.lat, position.lng) / 1000;
 

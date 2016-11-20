@@ -260,6 +260,13 @@ module.exports = function(account, timeToRun, strategy, logger) {
      * Check nearby.
      */
     function checkNearby(pos) {
+        // Double check finished. Its possible to get here again if a timeout
+        // still ends up firing after we run through the finished code.
+        if(finished) {
+            finish();
+            return;
+        }
+
         // Make sure we're properly authenticated before attempting to make an API call.        
         if(!isAuthenticated) {
             logger.error("Is not authenticated, will not call API.");
@@ -340,9 +347,12 @@ module.exports = function(account, timeToRun, strategy, logger) {
         startWorker: startWorker,
         addEncounter: addEncounter,
         finish: finish,
+
         finishWorkerCallback: function(cb) {
             finishWorkerCallback = cb;
         },
+
+        isFinished: function() { return finished; },
         getStrategy: function() { return strategy; },
         getLastMapObjects: function() { return lastMapObjects; },
         getKnownEncounters: function() { return knownEncounters; },

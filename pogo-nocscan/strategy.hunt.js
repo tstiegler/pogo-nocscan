@@ -14,8 +14,9 @@ var gpsHelper   = require("./helper.gps.js");
  * the given s2 cell/nearby radius intersection in its entirety)
  */
 module.exports = function(account, config, waypoints, encounterId) {
-    var parent;
     var self;
+    var parent;
+    var worker;
 
     var position = waypoints[0];
 
@@ -50,10 +51,8 @@ module.exports = function(account, config, waypoints, encounterId) {
         // Check if we've finished navigating to all waypoints.
         if(waypointIndex == waypoints.length) {
             // Tell the scan worker that we're done.
-            // TODO: Figure out how to reference the worker for this strat.
-            // since this fails because "parent" is the parent strategy,
-            // not the applicable worker.
-            parent.finish();
+            if(worker)
+                worker.finish();
             return;
         }
 
@@ -138,7 +137,8 @@ module.exports = function(account, config, waypoints, encounterId) {
         handleNearby: handleNearby,
         handleCatchable: handleCatchable,
         setLogger: function(nl) { logger = nl; },
-        setParent: function(p) { parent = p; }
+        setParent: function(p) { parent = p; },
+        setWorker: function(w) { worker = w; }
     }
     return self;
 }
