@@ -143,9 +143,20 @@ app.get('/position/:username', function(req, res) {
     
     var scanner = getByUsername(req.params.username);
 
-    if(scanner != null)
-        res.send(scanner.getActiveScanner().getPosition());
-    else
+    if(scanner != null && scanner.getActiveScanner() != null) {
+        var position = scanner.getActiveScanner().getPosition();
+
+        var scanStrat = scanner.getActiveScanner().getStrategy();
+        if("getHuntWorkers" in scanStrat) {
+            var huntWorkers = scanStrat.getHuntWorkers();
+            position.huntWorkers = [];
+            _.each(huntWorkers, function(worker) {
+                position.huntWorkers.push(worker.getPosition());
+            });
+        }
+
+        res.send(position);
+    } else
         res.send([]);
 });
 

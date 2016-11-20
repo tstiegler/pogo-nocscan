@@ -50,10 +50,23 @@ module.exports = function(account, config, waypoints, encounterId) {
         // Check if we've finished navigating to all waypoints.
         if(waypointIndex == waypoints.length) {
             // Tell the scan worker that we're done.
+            // TODO: Figure out how to reference the worker for this strat.
+            // since this fails because "parent" is the parent strategy,
+            // not the applicable worker.
             parent.finish();
             return;
         }
 
+        callbackfunc(position);
+
+        position = waypoints[waypointIndex];
+        waypointIndex++;
+       
+        // All of this below was kinda stupid.
+        // At 30 seconds between traveling straight from one beehive
+        // to another, you travel at like 10k/hr.... no biggie.
+
+        /*
         var time = (new Date()).getTime();
 
         if(navCount == 0) {
@@ -64,22 +77,25 @@ module.exports = function(account, config, waypoints, encounterId) {
             var speedAsMPS = (randomizeSpeed(speedkmh) * 1000) / 60 / 60                // Speed as meters/second.
             var distanceToTravel = timeSinceLastScan * speedAsMPS;      // Meters to travel this iteration.
 
+            logger.info("Travelling " + distanceToTravel + " meters");
+
             // Get the new location.
             var newLocation = gpsHelper.moveTowards(position, waypoints[waypointIndex], distanceToTravel);
         
+
             // If this location is close enough to the next location, increment the waypointIndex.
             if(Math.abs(newLocation.lat - waypoints[waypointIndex].lat) < 0.000005
             && Math.abs(newLocation.lng - waypoints[waypointIndex].lng) < 0.000005) {
                 newLocation = waypoints[waypointIndex];
-                waypointIndex++;
-                position = newLocation;
-
-                callbackfunc(position);
+                waypointIndex++;   
             }
+
+            position = newLocation;
+            callbackfunc(position);
         }
 
         lastScanTime = time;
-        navCount++;
+        navCount++;*/
     }
 
 

@@ -14,12 +14,13 @@ function checkPosition(account, position, logger) {
         var distanceKm = gpsHelper.haversine(logEntry.position.lat, logEntry.position.lng, position.lat, position.lng) / 1000;
 
         var kmph = distanceKm / timespanHours;
+        logger.info("Speed:", kmph.toFixed(6) + "km/h");
 
         if(kmph > MAX_SPEED_KMPH) {
-            logger.info("Going too fast!")
+            logger.info("Going too fast!");
+            logger.info(position);
             return false;
-        } else
-            logger.info("Speed:", kmph.toFixed(6) + "km/h");
+        }            
     }
 
     speedLog[account.username] = {

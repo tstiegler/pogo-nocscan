@@ -144,6 +144,11 @@ module.exports = function(account, config) {
      * Poll for hunt targets.
      */
     function huntPoll() {
+        // TODO: Account for the posibility that the encounter might despawn before
+        // hunting is finished.
+        // ie: check if all huntScanners are finished/stale, then manually clear
+        // the array and set huntersActive back to false.
+
         if(!huntersActive && huntQueue.length > 0) {
             var poke = huntQueue.shift();
             var encounterId = poke.encounter_id;
@@ -183,7 +188,7 @@ module.exports = function(account, config) {
                     huntstrat.setParent(self);
 
                     // Create worker.
-                    var scanWorker = scanWorkerFactory(scanAccount, 1080, huntstrat, huntlogger);
+                    var scanWorker = scanWorkerFactory(scanAccount, 1080000, huntstrat, huntlogger);
                     scanWorker.startWorker();
 
                     // Keep track of workers.

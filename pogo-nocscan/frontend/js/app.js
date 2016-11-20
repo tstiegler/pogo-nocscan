@@ -104,6 +104,7 @@
         var nearbyCircle;
         var catchableCircle;
         var position;
+        var huntWorkerCircles = [];
 
         var pollInterval = window.setInterval(poll, 10000);
         poll();
@@ -148,7 +149,7 @@
                 position = data;
 
                 if(nearbyCircle != null) 
-                    nearbyCircle.setCenter(data);
+                    nearbyCircle.setCenter({lat: data.lat, lng: data.lng});
                 else {
                     nearbyCircle = new google.maps.Circle({
                         strokeColor: '#00FF00',
@@ -157,14 +158,14 @@
                         fillColor: '#00FF00',
                         fillOpacity: 0.1,
                         map: map,
-                        center: data,
+                        center: {lat: data.lat, lng: data.lng},
                         radius: 200,
                         zIndex: 1
                     });
                 }
 
                 if(catchableCircle != null)
-                    catchableCircle.setCenter(data);
+                    catchableCircle.setCenter({lat: data.lat, lng: data.lng});
                 else {        
                     catchableCircle = new google.maps.Circle({
                         strokeColor: '#0000FF',
@@ -173,12 +174,33 @@
                         fillColor: '#0000FF',
                         fillOpacity: 0.2,
                         map: map,
-                        center: data,
+                        center: {lat: data.lat, lng: data.lng},
                         radius: 70,
                         zIndex: 2
                     });
                 }
-            }
+
+                _.each(huntWorkerCircles, function(item) {
+                    item.setMap(null);
+                })
+                huntWorkerCircles = [];
+
+                if("huntWorkers" in data) {
+                    _.each(data.huntWorkers, function(workerPos) {
+                        huntWorkerCircles.push(new google.maps.Circle({
+                            strokeColor: '#FFFF00',
+                            strokeOpacity: 0.1,
+                            strokeWeight: 2,
+                            fillColor: '#FFFF00',
+                            fillOpacity: 0.2,
+                            map: map,
+                            center: workerPos,
+                            radius: 70,
+                            zIndex: 2
+                        }));
+                    })
+                }
+            }1
         }
 
         function kill() {

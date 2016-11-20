@@ -87,6 +87,8 @@ module.exports = function(account, timeToRun, strategy, logger) {
      * Finish the scan worker.
      */
     function finish() {
+        logger.info("Finishing...");
+
         finished = true;
 
         if(scanTimeout != null)
@@ -341,7 +343,7 @@ module.exports = function(account, timeToRun, strategy, logger) {
         finishWorkerCallback: function(cb) {
             finishWorkerCallback = cb;
         },
-        getStrategy: function() { return getStrategy; },
+        getStrategy: function() { return strategy; },
         getLastMapObjects: function() { return lastMapObjects; },
         getKnownEncounters: function() { return knownEncounters; },
         getPosition: function() { 
