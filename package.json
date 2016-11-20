@@ -29,7 +29,7 @@
     "request": "^2.74.0",
     "s2-geometry": "^1.2.7",    
     "express": "latest",
-    "pogobuf": "git+https://github.com/tstiegler/pogobuf.git",
+    "pogobuf": "git+https://github.com/cyraxx/pogobuf.git",
     "pushover-notifications": "latest",
     "nodemailer": "latest",
     "winston": "latest",

@@ -178,31 +178,33 @@ module.exports = function(account, timeToRun, strategy, logger) {
     function initClientStep1() {
         logger.info("Initializing worker...");
 
-        client.signatureBuilder = new pogoSignature.Builder();
-        client.lastMapObjectsCall = 0;
-        client.endpoint = 'https://pgorelease.nianticlabs.com/plfe/rpc';
+        client.init(false).then(function() {
+            client.signatureBuilder = new pogoSignature.Builder();
+            client.lastMapObjectsCall = 0;
+            client.endpoint = 'https://pgorelease.nianticlabs.com/plfe/rpc';
 
-        client.batchStart()
-            .getPlayer()
-            .checkChallenge()
-            .batchCall()
-            .then(function(initResponse) {
-                logger.info("Init [1/2]");
+            client.batchStart()
+                .getPlayer()
+                .checkChallenge()
+                .batchCall()
+                .then(function(initResponse) {
+                    logger.info("Init [1/2]");
 
-                // Run the tutorial helper, move to next step when complete.
-                tutorialHelper(
-                    client, 
-                    account, 
-                    initResponse[0].player_data.tutorial_state, 
-                    initClientStep2,
-                    logger
-                );
-            }, function(err) {
-                logger.error("Error during initialization:", err);
+                    // Run the tutorial helper, move to next step when complete.
+                    tutorialHelper(
+                        client, 
+                        account, 
+                        initResponse[0].player_data.tutorial_state, 
+                        initClientStep2,
+                        logger
+                    );
+                }, function(err) {
+                    logger.error("Error during initialization:", err);
 
-                if("torconfig" in account)
-                    torHelper.newCircuit(finish, account, logger);                                          
-            });   
+                    if("torconfig" in account)
+                        torHelper.newCircuit(finish, account, logger);                                          
+                });   
+        });
     }
 
 
@@ -222,7 +224,7 @@ module.exports = function(account, timeToRun, strategy, logger) {
                 logger.info("Init [2/2]");
 
                 // Fake the expected process inital data call and start performing scans.
-                client.processInitialData([0, 0, 0, 0, initResponse[5]]);
+                client.processSettingsResponse(initResponse[5]);
                 scanTimeout = timeoutHelper.setTimeout(account.username + "-scan", performScan, scanDelay * 1000);
             })
     }
