@@ -149,7 +149,7 @@ module.exports = function(config) {
             })
             .catch(function(e) {
                 logger.error("Exception during proxy check, moving to next account...");
-                legger.error(e);
+                logger.error(e);
 
                 if("torconfig" in account)
                     torHelper.newCircuit(function() { setTimeout(startRandomScanner, 1000); }, account, logger);

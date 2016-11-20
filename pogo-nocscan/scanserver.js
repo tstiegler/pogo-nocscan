@@ -31,7 +31,7 @@ _.each(configs, function(item) { scanners.push(scannerFactory(item)); })
 
 // Create app.
 var app = express();
-winston.level = 'error';
+winston.level = 'info';
 
 // Serve up the static frontend files.
 app.use('/frontend', express.static('frontend'));

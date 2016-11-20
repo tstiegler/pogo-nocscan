@@ -20,6 +20,8 @@ var speedBanHelper  = require("./helper.speedban.js");
 module.exports = function(account, timeToRun, strategy, logger) {
     var self;
 
+    var finished = false;
+
     var finishWorkerCallback;
     var isAuthenticated = false;
 
@@ -30,6 +32,7 @@ module.exports = function(account, timeToRun, strategy, logger) {
 
     var scanDelay = 30;
     var knownEncounters = {};
+    var sequentialZeroObjects = 0;
     
  
     // ------------------------------------------------------------------------
@@ -69,7 +72,7 @@ module.exports = function(account, timeToRun, strategy, logger) {
                     });
                 }, function() {
                     scanTimeout = timeoutHelper.setTimeout(account.username + "-scan", startWorker, scanDelay * 1000);
-                }); 
+                }, true); 
             });
 
         // Cancel the timeout after we are finished running.
@@ -84,11 +87,15 @@ module.exports = function(account, timeToRun, strategy, logger) {
      * Finish the scan worker.
      */
     function finish() {
+        finished = true;
+
         if(scanTimeout != null)
             clearTimeout(scanTimeout);
 
         if(finishWorkerCallback != null)
             finishWorkerCallback();
+
+        strategy.shutdown();
     }
 
 
@@ -230,7 +237,7 @@ module.exports = function(account, timeToRun, strategy, logger) {
             });
         }, function() {
             scanTimeout = timeoutHelper.setTimeout(account.username + "-scan", performScan, scanDelay * 1000);
-        });
+        }, false);
     }
 
 
@@ -283,6 +290,9 @@ module.exports = function(account, timeToRun, strategy, logger) {
             var mapObjects = result[0];
             lastMapObjects = mapObjects;
 
+            var captcha = result[1];
+            //console.log(captcha);
+
             var catchableCount = 0;
             var nearbyCount = 0;
 
@@ -295,8 +305,20 @@ module.exports = function(account, timeToRun, strategy, logger) {
             logger.info("  " + catchableCount + " catchable pokemon.");
             logger.info("  " + nearbyCount + " nearby pokemon.");
 
-            if(catchableCount == 0 && nearbyCount == 0)
+            if(catchableCount == 0 && nearbyCount == 0) {
                 logger.error("Possible softban. (user:" + account.username + ")");
+                sequentialZeroObjects++;
+            } else   
+                sequentialZeroObjects = 0;
+
+            if(sequentialZeroObjects == 3) {
+                logger.error("Too many softbanned results.")
+
+                if("torconfig" in account)
+                    torHelper.newCircuit(finish, account, logger);    
+                else
+                    finish();
+            }
 
             // Set the timeout to scan again.
             scanTimeout = timeoutHelper.setTimeout(account.username + "-scan", performScan, scanDelay * 1000);
@@ -318,7 +340,8 @@ module.exports = function(account, timeToRun, strategy, logger) {
         finish: finish,
         finishWorkerCallback: function(cb) {
             finishWorkerCallback = cb;
-        },        
+        },
+        getStrategy: function() { return getStrategy; },
         getLastMapObjects: function() { return lastMapObjects; },
         getKnownEncounters: function() { return knownEncounters; },
         getPosition: function() { 

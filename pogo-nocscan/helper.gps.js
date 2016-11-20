@@ -111,5 +111,6 @@ function fuzzedLocation(latlng) {
 module.exports = {
     getBearing: getBearing,
     haversine: haversine,
-    fuzzedLocation: fuzzedLocation
+    fuzzedLocation: fuzzedLocation,
+    moveTowards: moveTowards
 }

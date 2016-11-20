@@ -19,7 +19,7 @@ function checkPosition(account, position, logger) {
             logger.info("Going too fast!")
             return false;
         } else
-            logger.info("Speed:", kmph + "km/h");
+            logger.info("Speed:", kmph.toFixed(6) + "km/h");
     }
 
     speedLog[account.username] = {

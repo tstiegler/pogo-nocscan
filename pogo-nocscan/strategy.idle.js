@@ -12,8 +12,8 @@ var s2beehiveHelper     = require("./helper.s2beehive.js");
 
 /**
  * Scan strategy object, will idle on a configured location and report on
- * nearby sightings. (TODO: Eventually this will spin up sub-workers to scan
- * the given s2 cell/nearby radius intersection in its entirety)
+ * nearby sightings. If subworkers have been configured, this will spin off
+ * new workers to find encounters (specified in config.huntIds) in nearby.
  */
 module.exports = function(account, config) {
     var parent;
@@ -27,7 +27,22 @@ module.exports = function(account, config) {
     var huntWorkers = [];
     var huntersActive = false;
 
+    var huntPollInterval;
+
+    if("huntScanners" in account && account.huntScanners.length > 0) {
+        huntPollInterval = setInterval(huntPoll, 10000);
+    }
+
     // ------------------------------------------------------------------------
+
+    /**
+     * Handle shutdown requests.
+     */
+    function shutdown() {
+        if(huntPollInterval != null)
+            clearInterval(huntPollInterval);
+    }
+
 
     /**
      * Stay stationaty, the client handles location fuzzing.
@@ -72,8 +87,10 @@ module.exports = function(account, config) {
                         logger.info("Nearby: " + pokemonName);
 
                         // Add to hunt queue.
-                        if("huntScanners" in account && account.huntScanners.length > 0)
+                        if("huntScanners" in account && account.huntScanners.length > 0) {
+                            logger.info("Adding to hunt queue.");
                             huntQueue.push(poke);
+                        }
                     }
                 }
             });
@@ -132,6 +149,8 @@ module.exports = function(account, config) {
             var encounterId = poke.encounter_id;
             var s2bounds = s2.S2Cell.FromHilbertQuadKey(poke.cellKey).getCornerLatLngs();
 
+            logger.info("Taking encounter from hunt queue:", encounterId);
+
             var hasWarned = false;
             _.each(catchableNotifications, function(eid) { if(encounterId == eid) hasWarned = true; });
 
@@ -141,9 +160,9 @@ module.exports = function(account, config) {
                 // Get list of scan points for the given cell and divide them amongst the workers.
                 var splitBeehive = s2beehiveHelper.distributeS2Beehive(s2bounds, account.huntScanners.length);
 
-                _.each(account.huntScanners, function(scanAccount) {
+                _.each(account.huntScanners, function(scanAccount, idx) {
                     // Create the hunt strategy instance for this account.
-                    var huntstrat = huntStratFactory(scanAccount, config);
+                    var huntstrat = huntStratFactory(scanAccount, config, splitBeehive[idx], encounterId);
                     var huntlogger = new (winston.Logger)({
                         transports: [
                             new (winston.transports.Console)({
@@ -163,8 +182,6 @@ module.exports = function(account, config) {
                     huntstrat.setLogger(huntlogger);
                     huntstrat.setParent(self);
 
-                    // TODO: Set waypoints for hunter.
-
                     // Create worker.
                     var scanWorker = scanWorkerFactory(scanAccount, 1080, huntstrat, huntlogger);
                     scanWorker.startWorker();
@@ -180,15 +197,26 @@ module.exports = function(account, config) {
      * Handle getting a hunt result.
      */
     function huntResult() {
-
+        // At this point, we've found the encounter and has been reported
+        // through a call to handleCatchable. At this point, we just need
+        // to shut all the scanners down.
+        logger.info("Hunt result obtained, killing subworkers.");
+        _.each(huntWorkers, function(worker) {
+            worker.finish();
+        })
+        huntWorkers = [];
+        huntersActive = false;
     }
 
 
     // Return module.
     self = {
+        shutdown: shutdown,
         getPosition: getPosition,
         handleNearby: handleNearby,
         handleCatchable: handleCatchable,
+        huntResult: huntResult,
+        getHuntWorkers: function() { return huntWorkers; },
         setLogger: function(nl) { logger = nl; },
         setParent: function(p) { parent = p; }
     }
