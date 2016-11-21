@@ -66,7 +66,7 @@ module.exports = function(config) {
      */
     function checkIP() {
         // Get a non proxied request to find our clearnet IP.
-        request('https://api.ipify.org/?format=json', function(error, res, body) {
+        request('http://api.ipify.org/?format=json', function(error, res, body) {
             try {
                 clearIPInfo = JSON.parse(body);
                 logger.info("Looks like our current IP is:", clearIPInfo.ip);
@@ -183,7 +183,7 @@ module.exports = function(config) {
             // Do a request to ipify under the proxy.
             request({
                 method: "GET",
-                url: 'https://api.ipify.org/?format=json',
+                url: 'http://api.ipify.org/?format=json',
                 proxy: tProxy
             }, function(error, res, body) {
 
