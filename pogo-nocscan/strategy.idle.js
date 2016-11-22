@@ -9,6 +9,7 @@ var winston     = require('winston');
 var huntStratFactory    = require("./strategy.hunt.js");
 var scanWorkerFactory   = require("./scanworker.js");
 var s2beehiveHelper     = require("./helper.s2beehive.js");
+var notiHelper          = require("./helper.notifications.js");
 
 /**
  * Scan strategy object, will idle on a configured location and report on
@@ -84,7 +85,7 @@ module.exports = function(account, config) {
                         });
 
                         // Send notifications immediately.
-                        _.each(config.notifiers, function(notifier) { notifier.sendMessage(pokemonName + " nearby! " + displayLink); });
+                        notiHelper.sendMessage(config, pokemonName + " nearby! " + displayLink);
                         logger.info("Nearby: " + pokemonName);
 
                         // Add to hunt queue.
@@ -132,7 +133,7 @@ module.exports = function(account, config) {
                         var displayLink = "http://maps.google.com/maps?z=12&t=m&q=loc:" + position.lat + "+" + position.lng;
 
                         // Send notifications immediately.
-                        _.each(config.notifiers, function(notifier) { notifier.sendMessage(pokemonName + " found! " + displayLink); });
+                        notiHelper.sendMessage(config, pokemonName + " found! " + displayLink);
                         logger.info("Catchable: " + pokemonName);
                     }
                 }
@@ -202,7 +203,7 @@ module.exports = function(account, config) {
                     huntstrat.setParent(self);
 
                     // Create worker.
-                    var scanWorker = scanWorkerFactory(scanAccount, 1080000, huntstrat, huntlogger);
+                    var scanWorker = scanWorkerFactory(config, scanAccount, 1080000, huntstrat, huntlogger);
                     huntstrat.setWorker(scanWorker);
                     scanWorker.startWorker();
 

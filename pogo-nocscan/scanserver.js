@@ -7,10 +7,12 @@ var express         = require('express');
 var bodyParser      = require('body-parser')
 var _               = require('lodash');
 var winston         = require('winston');
+var ws              = require("nodejs-websocket");
 
 var c               = require("./constants.js");
 var scannerFactory  = require("./scanner.js");
 var captchaHelper   = require("./helper.captcha.js");
+var notiHelper      = require("./helper.notifications.js");
 
 // Configuration
 // ============================================================================
@@ -225,6 +227,36 @@ app.listen(3000, function () {
     winston.info('Scan Web API app listening on port 3000!')
 })
 
+
+/**
+ * Setup websockets server.
+ */
+var server = ws.createServer(function (conn) {
+        winston.info("Incoming websockets connection");
+        notiHelper.addWSConection(conn);
+
+        /**
+         * Handle incoming messages.
+         */
+        conn.on("text", function (str) { });
+
+        /**
+         * Handle connection closes.
+         */
+        conn.on("close", function (code, reason) {
+            winston.info("Websockets connection close.");
+            notiHelper.removeWSConnection(conn);
+        })
+
+
+        /**
+         * Handle errors.
+         */
+        conn.on('error', function (err) {
+            winston.info("Websockets connection error.");
+            notiHelper.removeWSConnection(conn);
+        })
+    }).listen(3001);
 
 /**
  * Get scanner by currently activeuser name

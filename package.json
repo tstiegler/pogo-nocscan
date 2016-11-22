@@ -35,6 +35,7 @@
     "nodemailer": "latest",
     "winston": "latest",
     "node-beehive-cluster": "git+https://github.com/tstiegler/node-beehive-cluster.git",
-    "lodash": "latest"
+    "lodash": "latest",
+    "nodejs-websocket": "latest"
   }
 }

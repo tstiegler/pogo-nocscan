@@ -14,12 +14,14 @@ var timeoutHelper   = require("./helper.timeout.js");
 var torHelper       = require("./helper.tor.js");
 var speedBanHelper  = require("./helper.speedban.js");
 var captchaHelper   = require("./helper.captcha.js");
+var notiHelper      = require("./helper.notifications.js");
 var cache           = require("./helper.cache.js");
+
 
 /**
  * Start scanner with a given location.
  */
-module.exports = function(account, timeToRun, strategy, logger) {
+module.exports = function(config, account, timeToRun, strategy, logger) {
     var self;
 
     var finished = false;
@@ -333,6 +335,9 @@ module.exports = function(account, timeToRun, strategy, logger) {
 
                 // Let strategy know we didnt scan this position.
                 strategy.backstep();
+
+                // Send notification of captcha fail.
+                notiHelper.sendMessage(config, "Account flagged for captcha: " + account.username);
             }
 
 

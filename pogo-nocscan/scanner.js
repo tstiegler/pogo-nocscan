@@ -139,7 +139,7 @@ module.exports = function(config) {
                 var strategy = strategyIdleFactory(account, config);
                 strategy.setLogger(logger);
 
-                activeScanWorker = scanWorkerFactory(account, timeToRun, strategy, logger);
+                activeScanWorker = scanWorkerFactory(config, account, timeToRun, strategy, logger);
                 activeScanWorker.finishWorkerCallback(function() {
                     activeScanWorker = null;
                     setTimeout(startRandomScanner, 1000);
