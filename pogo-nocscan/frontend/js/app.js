@@ -114,7 +114,7 @@
                 }
             });
 
-            if(currentAccount() == null)
+            if(currentAccount() == null || !(currentAccount() in scannerInstances))
                 showAccount(data[0]);
         });
     }

@@ -1,0 +1,158 @@
+body {
+    overflow: hidden;
+}
+
+.titlebar {
+    background-color: #333;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 50px;
+    padding: 5px;
+
+    z-index: 999;
+
+    box-shadow: 0 0 15px #000;
+    border-bottom: 1px solid #999;
+}
+
+.titlebar h1 {
+    text-transform: uppercase;
+    color: #ddd;
+    font-size: 26px;
+    margin: 5px 0 0 0;
+    font-weight: 300;
+    text-shadow: 0 0 3px #000;
+}
+
+h5 {
+    text-transform: uppercase;   
+    font-size: 26px;
+    text-align: center;    
+}
+
+.popout-menu {
+    position: absolute;
+    display: none;
+    bottom: 50px;
+    width: 100%;
+    padding: 0px;   
+
+    background-color: #bbb;
+    box-shadow: 0px 0px 10px #000;
+    padding: 5px;    
+
+    z-index: 5;     
+}
+
+.menu {
+    position: absolute;
+    bottom: 0px;
+    height: 50px;
+    width: 100%;
+    background-color: #ccc;
+    padding: 5px;    
+    z-index: 5;
+
+    box-shadow: 0px 0px 10px #000;
+}
+
+#map {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+.modal {
+    z-index: 1000;
+}
+
+.mobile-info-button {
+    position: absolute;
+    left: 5px;
+    top: 60px;    
+    z-index: 499;
+
+    width: 50px;
+    height: 50px;
+}
+
+.info-window {
+    position: absolute;
+    left: 5px;
+    top: 50px;
+
+    width: 250px;
+    height: auto;
+    z-index: 500;
+}
+
+.marker-notch {
+    width: 8px;
+    height: 8px;
+    background-color: rgba(0, 0, 0, 0.4);
+    border-radius: 4px;
+
+    position: relative;
+    top: 36px;
+    left: 9px;
+}
+
+.sightings-wrapper {
+	height: 300px;
+	overflow-y: auto;
+}
+
+.pokemon-tile {
+    width: 100%;
+    height: 60px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center center;
+    margin-bottom: 15px;
+}
+
+h2 {
+    text-align: center;
+    text-transform: uppercase;
+    font-size: 26px;
+}
+
+.title-nav {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 12px;
+    width: 300px;
+
+    text-align: right;
+}
+
+.title-nav a {
+    color: #eee;
+}
+
+.title-nav-item {
+    vertical-align: middle;
+}
+
+.floating-pane {
+    display: none;
+    z-index: 999;
+
+    position: absolute;
+    top: 60px;
+    right: 5px;
+
+    background-color: #eee;
+    border: 1px solid #bbb;
+    border-radius: 5px;
+    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
+
+    padding: 10px;
+}
+
+#captchas {
+    width: 300px;
+}

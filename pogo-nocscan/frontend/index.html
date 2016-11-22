@@ -7,175 +7,13 @@
 
         <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
         
-        <style>
-body {
-    overflow: hidden;
-}
-
-.titlebar {
-    background-color: #333;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 50px;
-    padding: 5px;
-
-    z-index: 999;
-
-    box-shadow: 0 0 15px #000;
-    border-bottom: 1px solid #999;
-}
-
-.titlebar h1 {
-    text-transform: uppercase;
-    color: #ddd;
-    font-size: 26px;
-    margin: 5px 0 0 0;
-    font-weight: 300;
-    text-shadow: 0 0 3px #000;
-}
-
-h5 {
-    text-transform: uppercase;   
-    font-size: 26px;
-    text-align: center;    
-}
-
-.popout-menu {
-    position: absolute;
-    display: none;
-    bottom: 50px;
-    width: 100%;
-    padding: 0px;   
-
-    background-color: #bbb;
-    box-shadow: 0px 0px 10px #000;
-    padding: 5px;    
-
-    z-index: 5;     
-}
-
-.menu {
-    position: absolute;
-    bottom: 0px;
-    height: 50px;
-    width: 100%;
-    background-color: #ccc;
-    padding: 5px;    
-    z-index: 5;
-
-    box-shadow: 0px 0px 10px #000;
-}
-
-#map {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-}
-
-.modal {
-    z-index: 1000;
-}
-
-.mobile-info-button {
-    position: absolute;
-    left: 5px;
-    top: 60px;    
-    z-index: 499;
-
-    width: 50px;
-    height: 50px;
-}
-
-.info-window {
-    position: absolute;
-    left: 5px;
-    top: 50px;
-
-    width: 250px;
-    height: auto;
-    z-index: 500;
-}
-
-.marker-notch {
-    width: 8px;
-    height: 8px;
-    background-color: rgba(0, 0, 0, 0.4);
-    border-radius: 4px;
-
-    position: relative;
-    top: 36px;
-    left: 9px;
-}
-
-.sightings-wrapper {
-	height: 300px;
-	overflow-y: auto;
-}
-
-.pokemon-tile {
-    width: 100%;
-    height: 60px;
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center center;
-    margin-bottom: 15px;
-}
-
-h2 {
-    text-align: center;
-    text-transform: uppercase;
-    font-size: 26px;
-}
-
-.title-nav {
-    position: absolute;
-    top: 0;
-    right: 0;
-    padding: 12px;
-    width: 300px;
-
-    text-align: right;
-}
-
-.title-nav a {
-    color: #eee;
-}
-
-.title-nav-item {
-    vertical-align: middle;
-}
-
-.floating-pane {
-    display: none;
-    z-index: 999;
-
-    position: absolute;
-    top: 60px;
-    right: 5px;
-
-    background-color: #eee;
-    border: 1px solid #bbb;
-    border-radius: 5px;
-    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
-
-    padding: 10px;
-}
-
-#captchas {
-    width: 300px;
-}
-
-       </style>
+        <link rel="stylesheet" href="css/style.css" type="text/css" />
     </head>
     <body>
         <div class="titlebar">
             <h1>pogo-nocscan</h1>
 
-
             <div class="title-nav">
-
                 <!-- ko if: (uiMode() == c.UI_MODE_SHOW_ACCOUNTS) -->
                     <div class="title-nav-item">
                         <a href="#!" data-bind="click: function() { openCaptchas(); }" class="tooltipped" data-position="bottom" data-tooltip="Captchas">
@@ -268,7 +106,6 @@ h2 {
             </div>
         <!-- /ko -->
 
-
         <div class="info-window">
             <div class="card blue-grey darken-1">
                 <div class="card-content white-text">
@@ -313,15 +150,10 @@ h2 {
             </div>                
         </div>
 
-
+        <!-- GOOGLE MAP -->
         <div id="map"></div>
 
         <!-- ko if: (uiMode() == c.UI_MODE_SHOW_ACCOUNTS) -->
-            <!--<div class="menu">
-                <a href="#!" data-bind="click: function() { showMenu('scanner-menu'); }" class="btn">Scanners</a>
-                <a href="#!" data-bind="click: function() { showMenu('sightings-menu'); }" class="btn">Sightings</a>
-            </div>-->
-
             <div class="fixed-action-btn">
                 <a class="btn-floating btn-large red">
                     <i class="large material-icons">keyboard_arrow_up</i>
@@ -337,7 +169,7 @@ h2 {
         <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.4.1/knockout-min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.8/js/materialize.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.0/lodash.min.js"></script>
-        <script src="https://maps.googleapis.com/maps/api/js?key=[maps-api-key]"></script>
+        <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAcQdaAfmi_4_hap9Pdf1Zm_0cd0Cxkhug"></script>
         
         <script src="js/long.js"></script>
         <script src="js/s2geometry.js"></script>
