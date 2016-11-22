@@ -10,6 +10,7 @@ var core                = require("./core.js");
 var scanWorkerFactory   = require("./scanworker.js");
 var strategyIdleFactory = require("./strategy.idle.js");
 var torHelper           = require("./helper.tor.js");
+var captchaHelper       = require("./helper.captcha.js");
 
 /**
  * Scanner module.
@@ -84,18 +85,29 @@ module.exports = function(config) {
     /**
      * Start a scanner using a random account.
      */
-    function startRandomScanner() {  
-        // Filter out all accounts that are allowed to run in the current hour.
-        var currentHour = (new Date()).getHours();
-        var applicableAccounts = _.filter(config.accounts, function(acc, idx) {
-            var result = false;
+    function startRandomScanner() {
+        // Filter out accounts that are flagged for captcha.
+        var nonCaptchaAccounts = _.filter(config.accounts, function(acc, idx) {
+            // I can't remember why i did this... but maybe it's still used?
             config.accounts[idx].idx = idx;
 
+            if(captchaHelper.isRequired(acc.username)) {
+                logger.info("Captcha required for account: " + acc.username);
+                return false;
+            }
+
+            return true;
+        })
+
+        // Filter out all accounts that are allowed to run in the current hour.
+        var currentHour = (new Date()).getHours();
+        var applicableAccounts = _.filter(nonCaptchaAccounts, function(acc, idx) {
+            var result = false;
             _.each(acc.hours, function(hour) { if(currentHour == hour) result = true; });
             return result;
         });
 
-        // If there are now accounts, wait 10 minutes.
+        // If there are no accounts, wait 10 minutes.
         if(applicableAccounts.length == 0) {
             logger.info("No accounts available for the current hour (" + currentHour + "). Waiting...");
             setTimeout(startRandomScanner, 60 * 10 * 1000);

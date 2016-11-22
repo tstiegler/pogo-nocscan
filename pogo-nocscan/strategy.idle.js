@@ -142,6 +142,14 @@ module.exports = function(account, config) {
 
 
     /**
+     * Handle signal that the previous location wasn't scanned.
+     */
+    function backstep() {
+        // Idle scanner's don't care.
+    }
+
+
+    /**
      * Poll for hunt targets.
      */
     function huntPoll() {
@@ -227,6 +235,7 @@ module.exports = function(account, config) {
         getPosition: getPosition,
         handleNearby: handleNearby,
         handleCatchable: handleCatchable,
+        backstep: backstep,
         huntResult: huntResult,
         getHuntWorkers: function() { return huntWorkers; },
         setLogger: function(nl) { logger = nl; },

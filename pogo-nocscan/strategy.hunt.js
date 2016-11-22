@@ -19,12 +19,7 @@ module.exports = function(account, config, waypoints, encounterId) {
     var worker;
 
     var position = waypoints[0];
-
-    var navCount = 0;
-    var waypointIndex = 1;
-
-    var speedkmh = 10; // Make the worker go at 10km/h
-    var lastScanTime = 0;
+    var waypointIndex = 0;
 
     var logger = winston;
 
@@ -42,12 +37,6 @@ module.exports = function(account, config, waypoints, encounterId) {
      * Stay stationaty, the client handles location fuzzing.
      */
     function getPosition(callbackfunc, errorfunc, isLogin) {
-        // Don't bother navigating on the login call.
-        if(isLogin) {
-            callbackfunc(position);
-            return;
-        }
-
         // Check if we've finished navigating to all waypoints.
         if(waypointIndex == waypoints.length) {
             // Tell the scan worker that we're done.
@@ -56,45 +45,12 @@ module.exports = function(account, config, waypoints, encounterId) {
             return;
         }
 
-        callbackfunc(position);
+        callbackfunc(waypoints[waypointIndex]);
 
-        position = waypoints[waypointIndex];
-        waypointIndex++;
-       
-        // All of this below was kinda stupid.
-        // At 30 seconds between traveling straight from one beehive
-        // to another, you travel at like 10k/hr.... no biggie.
-
-        /*
-        var time = (new Date()).getTime();
-
-        if(navCount == 0) {
-            callbackfunc(position);
-        } else {
-            // Calculate the distance in meters to travel since last scan.
-            var timeSinceLastScan = (time - lastScanTime) / 1000;       // Seconds since last scan.
-            var speedAsMPS = (randomizeSpeed(speedkmh) * 1000) / 60 / 60                // Speed as meters/second.
-            var distanceToTravel = timeSinceLastScan * speedAsMPS;      // Meters to travel this iteration.
-
-            logger.info("Travelling " + distanceToTravel + " meters");
-
-            // Get the new location.
-            var newLocation = gpsHelper.moveTowards(position, waypoints[waypointIndex], distanceToTravel);
-        
-
-            // If this location is close enough to the next location, increment the waypointIndex.
-            if(Math.abs(newLocation.lat - waypoints[waypointIndex].lat) < 0.000005
-            && Math.abs(newLocation.lng - waypoints[waypointIndex].lng) < 0.000005) {
-                newLocation = waypoints[waypointIndex];
-                waypointIndex++;   
-            }
-
-            position = newLocation;
-            callbackfunc(position);
-        }
-
-        lastScanTime = time;
-        navCount++;*/
+        // Only move to the next waypoint index if this is NOT a login
+        // request that is asking for the position.
+        if(!isLogin)
+            waypointIndex++;    
     }
 
 
@@ -123,12 +79,15 @@ module.exports = function(account, config, waypoints, encounterId) {
         });         
     }
 
+
     /**
-     * Randomize the speed a little.
+     * Handle signal that the previous location wasn't scanned.
      */
-    function randomizeSpeed(inSpeed) {
-        return inSpeed - Math.random(); // Just take off a random 0-1km/h.
+    function backstep() {
+        // Move to the previous waypoint index.
+        waypointIndex--;
     }
+
 
     // Return module.
     self = {
@@ -136,6 +95,7 @@ module.exports = function(account, config, waypoints, encounterId) {
         getPosition: getPosition,
         handleNearby: handleNearby,
         handleCatchable: handleCatchable,
+        backstep: backstep,
         setLogger: function(nl) { logger = nl; },
         setParent: function(p) { parent = p; },
         setWorker: function(w) { worker = w; }

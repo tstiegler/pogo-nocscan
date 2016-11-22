@@ -11,7 +11,7 @@ var winston         = require('winston');
 /**
  * Helper method for handling tutorial completion.
  */
-module.exports = function(client, account, tutorialState, callback, logger) {
+module.exports = function(client, account, tutorialState, callback, errorcallback, logger) {
     logger = logger || winston;
 
     /**
@@ -80,7 +80,7 @@ module.exports = function(client, account, tutorialState, callback, logger) {
     /**
      * Step 5 & 6 : Codename selection.
      */
-    function step56(prefix) {
+    function step56(prefix, tries) {
         if(_.includes(tutorialState, POGOProtos.Enums.TutorialState.NAME_SELECTION)) {
             logger.info("Tutorial 5/X - Already done.");
             logger.info("Tutorial 6/X - Already done.");
@@ -89,14 +89,24 @@ module.exports = function(client, account, tutorialState, callback, logger) {
         }
 
         prefix = prefix || "";
+        tries = tries || 0;
+
+        if(tries == 5) {
+            logger.error("Couldn't set codename.");
+            errorcallback();
+            return;
+        }
+
+        var chkName = account.username + prefix;
+        logger.info("Checking availability:", chkName);        
 
         // STEP 5a: CHECK AVAILABLE NAME.
-        client.checkCodenameAvailable(account.username + prefix).then(function(resp) {
+        client.checkCodenameAvailable(chkName).then(function(resp) {
             if(resp.is_assignable) {
-                logger.info("Setting name to ", account.username + prefix);
+                logger.info("Setting name to:", chkName);
 
                 // STEP 5b: CLAIM NAME
-                client.claimCodename(account.username + prefix).then(function(resp2) {
+                client.claimCodename(chkName).then(function(resp2) {
                     logger.info("Tutorial 5/X");
                     setTimeout(function() {
 
@@ -108,7 +118,7 @@ module.exports = function(client, account, tutorialState, callback, logger) {
                     }, 5000);
                 });
             } else 
-                setTimeout(function() { step56(prefix + "1"); }, 5000);
+                setTimeout(function() { step56(prefix + "1", tries++); }, 5000);
         });
     }
 

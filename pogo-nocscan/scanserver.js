@@ -4,11 +4,13 @@
  */
 
 var express         = require('express');
+var bodyParser      = require('body-parser')
 var _               = require('lodash');
 var winston         = require('winston');
 
 var c               = require("./constants.js");
 var scannerFactory  = require("./scanner.js");
+var captchaHelper   = require("./helper.captcha.js");
 
 // Configuration
 // ============================================================================
@@ -33,7 +35,9 @@ _.each(configs, function(item) { scanners.push(scannerFactory(item)); })
 var app = express();
 winston.level = 'info';
 
-// Serve up the static frontend files.
+
+// Handle post data and serve up the static frontend files.
+app.use(bodyParser.urlencoded({extended: true})); 
 app.use('/frontend', express.static('frontend'));
 
 
@@ -177,6 +181,40 @@ app.get('/allencounters', function(req, res) {
     });
 
     res.send(result);
+});
+
+
+/**
+ * Fetch required captchas.
+ */
+app.get("/captchas", function(req, res) {
+    // Don't allow users to see catpchas encounters-only mode.
+    if(uiconfig.mode != c.UI_MODE_SHOW_ACCOUNTS) {
+        res.send([]);
+        return;
+    }
+
+    res.send(captchaHelper.getCaptchaList());
+});
+
+
+/**
+ * Handle captcha results.
+ */
+app.post('/captcharesult', function(req, res) {
+    // Don't allow users to see catpchas encounters-only mode.
+    if(uiconfig.mode != c.UI_MODE_SHOW_ACCOUNTS) {
+        res.send([]);
+        return;
+    }
+
+    var username    = req.body.username,
+        token       = req.body.token;
+
+    captchaHelper.setToken(username, token);
+    winston.info("Received token for:" + username + " -- ", token);
+    
+    res.send("OK");
 });
 
 

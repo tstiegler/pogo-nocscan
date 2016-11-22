@@ -1,4 +1,6 @@
 ﻿window.fe = (function() {
+    // Vars.
+
     var pokeTable = ["", "Bulbasaur","Ivysaur","Venusaur","Charmander","Charmeleon","Charizard","Squirtle","Wartortle","Blastoise","Caterpie","Metapod","Butterfree","Weedle","Kakuna","Beedrill","Pidgey","Pidgeotto","Pidgeot","Rattata","Raticate","Spearow","Fearow","Ekans","Arbok","Pikachu","Raichu","Sandshrew","Sandslash","Nidoran♀","Nidorina","Nidoqueen","Nidoran♂","Nidorino","Nidoking","Clefairy","Clefable","Vulpix","Ninetales","Jigglypuff","Wigglytuff","Zubat","Golbat","Oddish","Gloom","Vileplume","Paras","Parasect","Venonat","Venomoth","Diglett","Dugtrio","Meowth","Persian","Psyduck","Golduck","Mankey","Primeape","Growlithe","Arcanine","Poliwag","Poliwhirl","Poliwrath","Abra","Kadabra","Alakazam","Machop","Machoke","Machamp","Bellsprout","Weepinbell","Victreebel","Tentacool","Tentacruel","Geodude","Graveler","Golem","Ponyta","Rapidash","Slowpoke","Slowbro","Magnemite","Magneton","Farfetch’d","Doduo","Dodrio","Seel","Dewgong","Grimer","Muk","Shellder","Cloyster","Gastly","Haunter","Gengar","Onix","Drowzee","Hypno","Krabby","Kingler","Voltorb","Electrode","Exeggcute","Exeggutor","Cubone","Marowak","Hitmonlee","Hitmonchan","Lickitung","Koffing","Weezing","Rhyhorn","Rhydon","Chansey","Tangela","Kangaskhan","Horsea","Seadra","Goldeen","Seaking","Staryu","Starmie","Mr. Mime","Scyther","Jynx","Electabuzz","Magmar","Pinsir","Tauros","Magikarp","Gyarados","Lapras","Ditto","Eevee","Vaporeon","Jolteon","Flareon","Porygon","Omanyte","Omastar","Kabuto","Kabutops","Aerodactyl","Snorlax","Articuno","Zapdos","Moltres","Dratini","Dragonair","Dragonite","Mewtwo","Mew"];
 
     var c = {
@@ -6,22 +8,45 @@
         UI_MODE_ENCOUNTERS_ONLY: 1
     }
 
-    var uiMode = ko.observable(c.UI_MODE_ENCOUNTERS_ONLY);
-    var scanners = ko.observableArray([]);
-    var currentAccount = ko.observable();
-    var displayedCell = ko.observable();    
-
     var scannerInstances = {};
     var encounterMarkers = {};
-
-    var allCatchable = ko.observableArray([]);
-    var allNearby = ko.observableArray([]);
 
     var map;    
     var displayedCellPoly;
     var activeAccountMarker;
 
     var showTimeout;
+
+    // Observables.   
+
+    var uiMode = ko.observable(c.UI_MODE_ENCOUNTERS_ONLY);
+    var scanners = ko.observableArray([]);
+    var currentAccount = ko.observable();
+    var displayedCell = ko.observable();    
+
+    var isMobile = ko.observable(false);
+    var infoWindowShown = ko.observable(false);
+
+    var allCatchable = ko.observableArray([]);
+    var allNearby = ko.observableArray([]);
+
+    var captchas = ko.observableArray([]);
+    var captchaUrl = ko.observable();
+    var captchaUsername = ko.observable();
+    var captchaToken = ko.observable();
+
+    // Computeds.
+
+    var ecDummy = ko.observable();
+    var encounterCount = ko.computed(function() {
+        console.log(ecDummy());
+
+        var result = 0;
+        _.forOwn(encounterMarkers, function(value, id) { result++; });
+        return result;
+    })
+
+    // Functions.
 
     function initUI() {
         $.getJSON("/uiconfig", function(uiconfig) {
@@ -31,8 +56,8 @@
                 getScanners();
             }
 
-            window.setInterval(getAllEncounters, 10000);
-            getAllEncounters();
+            window.setInterval(pollAll, 10000);
+            pollAll();
 
             map.setCenter(uiconfig.initialCenter);
 
@@ -41,7 +66,34 @@
                     $('.tooltipped').tooltip({delay: 50});
                 });
             }, 1000)
-        })
+
+            $('.modal').modal();
+        });
+
+        $(window).resize(_.throttle(handleResize, 100));
+        handleResize();
+    }
+
+    function handleResize() {
+        var h = $(window).height();
+        var w = $(window).width();
+
+        $(".info-window .card").css({
+            height: (h - 65) + "px"
+        });
+
+        if(w < 1024) {
+            isMobile(true);
+
+            if(!infoWindowShown()) {
+                $(".info-window").css({
+                    left: "-250px"
+                });
+            }
+        } else {
+            isMobile(false);
+            $(".info-window").css({ left: 5 });
+        }      
     }
 
     function getScanners() {
@@ -67,18 +119,31 @@
         });
     }
 
-    function getAllEncounters() {
+    function pollAll() {
         $.getJSON("/allencounters", function(data) {
             _.forOwn(data, function(value, id) {
                 createEncounterMarker(value.encounter, value.secondsleft);
             });
         });
+
+        $.getJSON("/captchas", function(data) {
+            captchas([]);
+            _.forOwn(data, function(value, id) {
+                captchas.push({
+                    username: id,
+                    url: value.url,
+                    token: value.token 
+                });
+            });
+        });      
     }
 
-    function createEncounterMarker(encounter, secondsleft) {
+    function createEncounterMarker(encounter, secondsleft) {        
         // Check if we have already created a marker for this encounter.
         if(encounter.encounter_id in encounterMarkers)
             return;            
+
+        ecDummy((new Date()).getTime()); // Trigger encounter count computed.
 
         // Create the encounter marker.
         console.log("Placing marker: " +  encounter.encounter_id + " (will last " + secondsleft + " seconds)");
@@ -97,6 +162,8 @@
             encounterMarkers[encounter.encounter_id].remove();
             encounterMarkers[encounter.encounter_id].setMap(null);            
             delete encounterMarkers[encounter.encounter_id];
+
+            ecDummy((new Date()).getTime()); // Trigger encounter count computed.
         }, secondsleft * 1000);
     }
 
@@ -105,6 +172,7 @@
         var catchableCircle;
         var position;
         var huntWorkerCircles = [];
+        var updateCircles = false;
 
         var pollInterval = window.setInterval(poll, 10000);
         poll();
@@ -117,7 +185,7 @@
 
         function handleMapObjects(mapObjects) {
             var tmpNearby = [];
-            var tmpCatchable = [];
+            var tmpCatchable = [];            
 
             if(mapObjects != null && map != null) {
                 _.each(mapObjects.map_cells, function(cell, idx) {                
@@ -148,15 +216,17 @@
             if(map != null && data != null) {
                 position = data;
 
-                if(nearbyCircle != null) 
+                if(nearbyCircle != null && !updateCircles) 
                     nearbyCircle.setCenter({lat: data.lat, lng: data.lng});
                 else {
+                    if(nearbyCircle != null)  nearbyCircle.setMap(null);
+
                     nearbyCircle = new google.maps.Circle({
                         strokeColor: '#00FF00',
                         strokeOpacity: 0.2,
                         strokeWeight: 2,
                         fillColor: '#00FF00',
-                        fillOpacity: 0.1,
+                        fillOpacity: (name == currentAccount()) ? 0.2 : 0.1,
                         map: map,
                         center: {lat: data.lat, lng: data.lng},
                         radius: 200,
@@ -164,21 +234,26 @@
                     });
                 }
 
-                if(catchableCircle != null)
+                if(catchableCircle != null && !updateCircles)
                     catchableCircle.setCenter({lat: data.lat, lng: data.lng});
                 else {        
+                    if(catchableCircle != null) catchableCircle.setMap(null);
+
                     catchableCircle = new google.maps.Circle({
                         strokeColor: '#0000FF',
                         strokeOpacity: 0.1,
                         strokeWeight: 2,
                         fillColor: '#0000FF',
-                        fillOpacity: 0.2,
+                        fillOpacity: (name == currentAccount()) ? 0.2 : 0.1,
                         map: map,
                         center: {lat: data.lat, lng: data.lng},
                         radius: 70,
                         zIndex: 2
-                    });
+                    });                    
                 }
+
+                if(updateCircles)
+                    updateCircles = false;
 
                 _.each(huntWorkerCircles, function(item) {
                     item.setMap(null);
@@ -213,6 +288,7 @@
             poll: poll,
             kill: kill,        
             getPosition: function() { return position; },
+            updateCircles: function() { updateCircles = true; },
             nearbyCircle: nearbyCircle,
             catchableCircle: catchableCircle            
         }
@@ -220,7 +296,11 @@
 
     function showAccount(account) {
         currentAccount(account);
-        scannerInstances[currentAccount()].poll();
+
+        _.forOwn(scannerInstances, function(value, key) {
+            scannerInstances[key].updateCircles();
+            scannerInstances[key].poll();
+        });        
     }
 
     function clearAll() {
@@ -230,7 +310,14 @@
     }
 
     function centerMap() {
-        map.setCenter(scannerInstances[currentAccount()].getPosition());
+        if (location.protocol != 'https:') {
+            Materialize.toast("pogo-nocscan must be set up to use https to be able to get browser location.", 4000);
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(function(pos) {
+            map.setCenter({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        });        
     }
     
     google.maps.event.addDomListener(window, 'load', initMap);
@@ -241,43 +328,28 @@
           zoom: 17,
           center: {lat: 0, lng: 0},
           disableDefaultUI: true,
-          styles: [
-            {
-                "elementType": "labels",
-                "stylers": [
-                {
-                    "visibility": "off"
-                }
-                ]
-            },
-            {
-                "featureType": "landscape",
-                "stylers": [
-                {
-                    "visibility": "on"
-                }
-                ]
-            },
-            {
-                "featureType": "road",
-                "stylers": [
-                {
-                    "visibility": "on"
-                }
-                ]
-            },
-            {
-                "featureType": "water",
-                "stylers": [
-                {
-                    "visibility": "on"
-                }
-                ]
-            }
-          ]
+          styles: [{"elementType":"labels","stylers":[{"visibility":"off"}]},{"featureType":"landscape","stylers":[{"visibility":"on"}]},{"featureType":"road","stylers":[{"visibility":"on"}]},{"featureType":"water","stylers":[{"visibility":"on"}]}]
         });
 
         initUI();
+    }
+
+    function showInfoWindow() {
+        if(!infoWindowShown()) {
+            $(".info-window").animate({
+                'left': 5 + "px" 
+            });
+            infoWindowShown(true);
+        }
+    }
+
+    function closeInfoWindow() {
+        if(infoWindowShown() && isMobile()) {
+            $(".info-window").animate({
+                'left': -250 + "px"
+            });
+            infoWindowShown(false);
+        }
     }
 
     function showMenu(id) {
@@ -289,14 +361,52 @@
             $('#' + id).slideDown();
     }
 
+    function openCaptchas() {
+        if($("#captchas").is(':visible'))
+            $("#captchas").slideUp();
+        else
+            $("#captchas").slideDown();            
+    }
+
+    function showCaptchaModal(username, url) {
+        captchaUrl(url);
+        captchaUsername(username);
+        captchaToken('');
+        $('#captcha-modal').modal('open');
+        $("#captchas").slideUp();
+    }    
+
+    function captchaSend() {
+        if(captchaToken() == "") {
+            alert("Please enter a valid token.");
+            return;
+        }
+
+        $.post("/captcharesult", {username: captchaUsername(), token: captchaToken()}, function(data) {
+            captchaUrl('');
+            captchaUsername('');
+            captchaToken('');
+
+            if(data == "OK")
+                Materialize.toast('Captcha token sent, waiting for result.', 4000);
+            else 
+                Materialize.toast('Something went wrong sending captcha.', 4000);
+        })
+        
+        $('#captcha-modal').modal('close');
+    }
+
     function highlightCell(cellId) {
         if(displayedCell() == cellId)
             return;
         
         displayedCell(cellId);
 
+
         var key = S2.S2Cell.idToKey(cellId);
         var corners = S2.S2Cell.FromHilbertQuadKey(key).getCornerLatLngs();
+
+        map.setCenter(corners[0]);
 
         if(displayedCellPoly != null)
             displayedCellPoly.setMap(null);
@@ -387,20 +497,38 @@
 
 
     return {
+        // Vars
         c: c,
         pokeTable: pokeTable,
-
+        
+         // Observables.
         uiMode: uiMode,
-        showAccount: showAccount,
-        showMenu: showMenu,
-        initMap: initMap,
-        highlightCell: highlightCell,
-        centerMap: centerMap,
-
+        isMobile: isMobile,
+        infoWindowShown: infoWindowShown,        
         scanners: scanners,                
         allNearby: allNearby,
         allCatchable: allCatchable,
-        currentAccount: currentAccount
+        currentAccount: currentAccount,
+        captchas: captchas,
+        captchaUrl: captchaUrl,
+        captchaUsername: captchaUsername,
+        captchaToken: captchaToken,
+
+        // Computeds
+        encounterCount: encounterCount,
+
+        // Functions.
+        showAccount: showAccount,
+        showMenu: showMenu,
+        showInfoWindow: showInfoWindow,
+        closeInfoWindow: closeInfoWindow,
+        openCaptchas: openCaptchas,
+        showCaptchaModal: showCaptchaModal,
+        captchaSend: captchaSend,
+
+        initMap: initMap,
+        highlightCell: highlightCell,
+        centerMap: centerMap
     };
 })();
 

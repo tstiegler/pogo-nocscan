@@ -13,6 +13,8 @@ var tutorialHelper  = require("./helper.tutorial.js");
 var timeoutHelper   = require("./helper.timeout.js");
 var torHelper       = require("./helper.tor.js");
 var speedBanHelper  = require("./helper.speedban.js");
+var captchaHelper   = require("./helper.captcha.js");
+var cache           = require("./helper.cache.js");
 
 /**
  * Start scanner with a given location.
@@ -179,9 +181,17 @@ module.exports = function(account, timeToRun, strategy, logger) {
         logger.info("Initializing worker...");
 
         client.init(false).then(function() {
-            client.signatureBuilder = new pogoSignature.Builder();
-            client.lastMapObjectsCall = 0;
-            client.endpoint = 'https://pgorelease.nianticlabs.com/plfe/rpc';
+            // Check if we have an endpoint in cache.
+            if(cache.get(account.username + "-endpoint") != null)
+                client.endpoint = cache.get(account.username + "-endpoint");
+
+            // Check if have a captcha token to send.
+            if(captchaHelper.isRequired(account.username) && captchaHelper.getToken(account.username) != null) {
+                // Attempt a captcha solve then re-perform this method again 
+                tryPerformCaptcha();
+                scanTimeout = timeoutHelper.setTimeout(account.username + "-scan", initClientStep1, scanDelay * 1000);
+                return;
+            }
 
             client.batchStart()
                 .getPlayer()
@@ -190,12 +200,16 @@ module.exports = function(account, timeToRun, strategy, logger) {
                 .then(function(initResponse) {
                     logger.info("Init [1/2]");
 
+                    // Set endpoint in cache.
+                    cache.set(account.username + "-endpoint", client.endpoint);
+
                     // Run the tutorial helper, move to next step when complete.
                     tutorialHelper(
                         client, 
                         account, 
                         initResponse[0].player_data.tutorial_state, 
                         initClientStep2,
+                        finish,
                         logger
                     );
                 }, function(err) {
@@ -269,6 +283,16 @@ module.exports = function(account, timeToRun, strategy, logger) {
             return;
         }
 
+        // Check if we're awaiting a captcha response.
+        if(captchaHelper.isRequired(account.username)) {                     
+            tryPerformCaptcha();
+
+            // Scan again later and also let the strategy know that we didn't scan this position.
+            scanTimeout = timeoutHelper.setTimeout(account.username + "-scan", performScan, scanDelay * 1000);
+            strategy.backstep();                        
+            return;
+        }
+
         // Make sure we're properly authenticated before attempting to make an API call.        
         if(!isAuthenticated) {
             logger.error("Is not authenticated, will not call API.");
@@ -297,16 +321,27 @@ module.exports = function(account, timeToRun, strategy, logger) {
                 logger.error("Received null mapobject result...");
                 return [];
             }
+            
+            // Set endpoint in cache.
+            cache.set(account.username + "-endpoint", client.endpoint);
+
+            // Check if we got a captcha request.
+            var captcha = result[1];
+            if(captcha.show_challenge) {
+                logger.error("Captcha required for '" + account.username + "' -> " + captcha.challenge_url);
+                captchaHelper.required(account.username, captcha.challenge_url);
+
+                // Let strategy know we didnt scan this position.
+                strategy.backstep();
+            }
+
 
             var mapObjects = result[0];
-            lastMapObjects = mapObjects;
-
-            var captcha = result[1];
-            //console.log(captcha);
-
+            lastMapObjects = mapObjects;            
             var catchableCount = 0;
             var nearbyCount = 0;
 
+            // Calculate total nearby/catchable counts.
             _.each(mapObjects.map_cells, function(cell, idx) {
                 nearbyCount += cell.nearby_pokemons.length;
                 catchableCount += cell.catchable_pokemons.length;
@@ -316,6 +351,7 @@ module.exports = function(account, timeToRun, strategy, logger) {
             logger.info("  " + catchableCount + " catchable pokemon.");
             logger.info("  " + nearbyCount + " nearby pokemon.");
 
+            // Check if we got a softban result.
             if(catchableCount == 0 && nearbyCount == 0) {
                 logger.error("Possible softban. (user:" + account.username + ")");
                 sequentialZeroObjects++;
@@ -336,11 +372,32 @@ module.exports = function(account, timeToRun, strategy, logger) {
             
             return mapObjects.map_cells;
         }).each(cell => {
+            // Forward everything to the strategy to handle.
             var cellKey = s2.idToKey(cell.s2_cell_id.toString());
-
             strategy.handleNearby(cell.nearby_pokemons, cellKey, {lat: client.playerLatitude, lng: client.playerLongitude});
             strategy.handleCatchable(cell.catchable_pokemons, cellKey);
         }); 
+    }
+
+
+    /**
+     * Check if we have a captcha response and pump it over to the APi
+     */
+    function tryPerformCaptcha() {
+        var captchaToken = captchaHelper.getToken(account.username);
+        if(captchaToken != null) {
+            client.verifyChallenge(captchaToken).then(function(verifyResponse) {
+                if(verifyResponse.success == true)
+                    logger.info("Captcha success");
+                else
+                    logger.error("Captcha fail!");
+
+                // Even if it doesn't succeed, we might need a new captcha to 
+                // move forward, so mark it as complete.                
+                captchaHelper.complete(account.username);
+            });
+        } else 
+            logger.info("Waiting for captcha token.");
     }
 
 

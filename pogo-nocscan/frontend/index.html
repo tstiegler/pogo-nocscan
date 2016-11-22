@@ -34,7 +34,12 @@ body {
     margin: 5px 0 0 0;
     font-weight: 300;
     text-shadow: 0 0 3px #000;
+}
 
+h5 {
+    text-transform: uppercase;   
+    font-size: 26px;
+    text-align: center;    
 }
 
 .popout-menu {
@@ -67,17 +72,30 @@ body {
     position: absolute;
     width: 100%;
     height: 100%;
-    z-index: 1;
+}
+
+.modal {
+    z-index: 1000;
+}
+
+.mobile-info-button {
+    position: absolute;
+    left: 5px;
+    top: 60px;    
+    z-index: 499;
+
+    width: 50px;
+    height: 50px;
 }
 
 .info-window {
     position: absolute;
-    right: 5px;
-    top: 55px;
+    left: 5px;
+    top: 50px;
 
     width: 250px;
     height: auto;
-    z-index: 999;
+    z-index: 500;
 }
 
 .marker-notch {
@@ -111,49 +129,190 @@ h2 {
     font-size: 26px;
 }
 
+.title-nav {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 12px;
+    width: 300px;
+
+    text-align: right;
+}
+
+.title-nav a {
+    color: #eee;
+}
+
+.title-nav-item {
+    vertical-align: middle;
+}
+
+.floating-pane {
+    display: none;
+    z-index: 999;
+
+    position: absolute;
+    top: 60px;
+    right: 5px;
+
+    background-color: #eee;
+    border: 1px solid #bbb;
+    border-radius: 5px;
+    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
+
+    padding: 10px;
+}
+
+#captchas {
+    width: 300px;
+}
+
        </style>
     </head>
     <body>
         <div class="titlebar">
             <h1>pogo-nocscan</h1>
+
+
+            <div class="title-nav">
+
+                <!-- ko if: (uiMode() == c.UI_MODE_SHOW_ACCOUNTS) -->
+                    <div class="title-nav-item">
+                        <a href="#!" data-bind="click: function() { openCaptchas(); }" class="tooltipped" data-position="bottom" data-tooltip="Captchas">
+                            <i class="material-icons">report</i>
+                            <!-- ko if: (captchas().length > 0) -->
+                                <span style="position: relative; top: -7px;" class="red-text text-lighten-1" data-bind="text: captchas().length"></span>
+                            <!-- /ko -->
+                        </a>
+                    </div>
+                <!-- /ko -->
+            </div>
         </div>
 
         <!-- ko if: (uiMode() == c.UI_MODE_SHOW_ACCOUNTS) -->
-            <div class="popout-menu" id="scanner-menu">
-                <div>  
-                    <ul data-bind="foreach: scanners">
-                        <li><a class="btn purple" href="#!" data-bind="text: $data, click: function() { $root.showMenu('scanner-menu'); $root.showAccount($data); }"></a></li>
-                    </ul>
+            <!-- Accounts modal -->
+            <div id="accounts-modal" class="modal">
+                <div class="modal-content">
+                    <h5>Accounts</h5>
+
+                    <div data-bind="foreach: scanners" class="row sightings-wrapper">
+                        <div class="col s12 m6 l4">
+                            <a class="btn purple" style='width: 100%; margin-bottom: 5px;' href="#!" data-bind="text: $data, click: function() { $root.showAccount($data); $('#accounts-modal').modal('close'); }"></a>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">                    
+                    <a href="#!" data-bind="click: function() { $('#accounts-modal').modal('close'); }" class="waves-effect waves-green btn-flat">Close</a>
                 </div>
             </div>
             
-            <div class="popout-menu" id="sightings-menu">
-                <h2>Sightings</h2>
+            <!-- Sightings modal -->
+            <div id="sightings-modal" class="modal">
+                <div class="modal-content">
+                    <h5>Sightings for: <span data-bind="text: currentAccount"></span></h5>
 
-                <div data-bind="foreach: allNearby" class="row sightings-wrapper">
-                    <div class="col s4 center-align">
-                        <a href="#!" data-bind="click: function() { $root.highlightCell(s2_cell_id); $root.showMenu(''); }">
-                            <div data-bind="attr: {style: 'background-image: url(/frontend/img/pokemon/' + pokemon_id + '.png);'}" class="pokemon-tile"></div>
-                        </a>  
+                    <div data-bind="foreach: allNearby" class="row sightings-wrapper">
+                        <div class="col s6 m4 center-align">
+                            <a href="#!" data-bind="click: function() { $root.highlightCell(s2_cell_id); $('#sightings-modal').modal('close'); }">
+                                <div data-bind="attr: {style: 'background-image: url(/frontend/img/pokemon/' + pokemon_id + '.png);'}" class="pokemon-tile"></div>
+                            </a>  
+                        </div>
                     </div>
                 </div>
-            </div>   
+                <div class="modal-footer">                    
+                    <a href="#!" data-bind="click: function() { $('#sightings-modal').modal('close'); }" class="waves-effect waves-green btn-flat">Close</a>
+                </div>
+            </div>
 
-            <div class="info-window">
-                <div class="card blue-grey darken-1">
-                    <div class="card-content white-text">
-                        <!--<span class="card-title">Card Title</span>-->
-                        <p><strong>Account:</strong> <span data-bind="text: currentAccount"></span></p>
-                        <p><strong>Nearby:</strong> <span data-bind="text: allNearby().length"></span></p>
-                        <p><strong>Catchable:</strong> <span data-bind="text: allCatchable().length"></span></p>
+            <!-- Captcha notification pane -->
+            <div class="floating-pane" id="captchas">
+                <!-- ko if: captchas().length > 0 -->
+                    <div style="text-align: center; margin: 15px; text-transform: uppercase; font-family: 'roboto';">
+                        Acounts requiring captcha
                     </div>
-                    <!--<div class="card-action">
-                        <a href="#">This is a link</a>
-                        <a href="#">This is a link</a>
-                    </div>-->
-                </div>                
+                    <div data-bind="foreach: captchas">
+                        <a href="#!" class="btn" style="margin-bottom: 5px" data-bind="click: function() { $root.showCaptchaModal(username, url); }, text: username" style="width: 100%"></a>
+                    </div>
+                <!-- /ko -->
+
+                <!-- ko if: captchas().length == 0 -->
+                    <div style="text-align: center; margin: 50px; text-transform: uppercase; font-family: 'roboto';">
+                        No captchas<br />
+                        <i class="material-icons">sentiment_very_satisfied</i>
+                    </div>
+                <!-- /ko -->
+            </div>
+
+            <!-- Captcha modal -->
+            <div id="captcha-modal" class="modal">
+                <div class="modal-content">
+                    <h4>Enter Captcha for: <span data-bind="text: captchaUsername"></span></h4>
+                    <p data-bind="text: captchaUrl"></p>
+                    <hr />
+                    <p>
+                        <input data-bind="value: captchaToken" type="text" placeholder="Paste token here" />
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <a href="#!" data-bind="click: function() { captchaSend(); }" style='margin-left: 5px;' class="waves-effect waves-green btn">Send Token</a>
+                    <a href="#!" data-bind="click: function() { $('#captcha-modal').modal('close'); }" class="waves-effect waves-green btn-flat">Close</a>
+                </div>
             </div>
         <!-- /ko -->
+
+        <!-- ko if: isMobile -->
+            <div class="mobile-info-button">
+                <a href="#!" data-bind="click: function() { showInfoWindow(); }" class="btn-floating btn-large waves-effect waves-light blue-grey">
+                     <i class="material-icons">keyboard_arrow_right</i>
+                </a>
+            </div>
+        <!-- /ko -->
+
+
+        <div class="info-window">
+            <div class="card blue-grey darken-1">
+                <div class="card-content white-text">
+                    <!-- ko if: isMobile -->
+                        <div class="right-align">
+                            <a href="#!" class="waves-effect waves-light white-text" style="width: 20px; text-align: left;" data-bind="click: function() { closeInfoWindow(); }">
+                                <i class="material-icons">clear</i>
+                            </a>
+                        </div>
+                    <!-- /ko -->
+
+                    <!-- ko if: (uiMode() == c.UI_MODE_SHOW_ACCOUNTS) -->
+                        <span class="card-title">Selected Account</span>
+
+                        <div style="text-transform: uppercase; font-family: 'roboto'; font-size: 12px;">
+                            <p><strong>Account:</strong> <span data-bind="text: currentAccount"></span></p>
+                            <p><strong>Nearby:</strong> <span data-bind="text: allNearby().length"></span></p>
+                            <p><strong>Catchable:</strong> <span data-bind="text: allCatchable().length"></span></p>
+                        </div>
+
+                        <div style="marign: 10px;" class="right-align">
+                            <a class="btn-floating waves-effect waves-light green tooltipped" data-bind="click: function() { $('#sightings-modal').modal('open'); }" data-position="left" data-tooltip="Sightings">
+                                <i class="material-icons">visibility</i>
+                            </a>
+
+                            <a class="btn-floating waves-effect waves-light green tooltipped" data-bind="click: function() { $('#accounts-modal').modal('open'); }" data-position="left" data-tooltip="Change Account">
+                                <i class="material-icons">swap_vert</i>
+                            </a>
+                        </div>
+                    <!-- /ko -->
+
+                    <span class="card-title">Stats</span>
+
+                    <div style="text-transform: uppercase; font-family: 'roboto'; font-size: 12px;">
+                        <p><strong>Encounters:</strong> <span data-bind="text: encounterCount"></span></p>
+                    </div>
+                </div>
+                <!--<div class="card-action">
+                    <a href="#">This is a link</a>
+                    <a href="#">This is a link</a>
+                </div>-->
+            </div>                
+        </div>
+
 
         <div id="map"></div>
 
@@ -168,9 +327,7 @@ h2 {
                     <i class="large material-icons">keyboard_arrow_up</i>
                 </a>
                 <ul>
-                    <li><a class="btn-floating red tooltipped" data-bind="click: function() { centerMap(); }" data-position="left" data-tooltip="Center Map"><i class="material-icons">location_searching</i></a></li>
-                    <li><a class="btn-floating blue tooltipped" data-position="left" data-tooltip="Select Account"><i class="material-icons">account_circle</i></a></li>
-                    <li><a class="btn-floating green tooltipped" data-position="left" data-tooltip="Nearby Sightings"><i class="material-icons">visibility</i></a></li>
+                    <li><a class="btn-floating red tooltipped" data-bind="click: function() { centerMap(); }" data-position="left" data-tooltip="Center Map"><i class="material-icons">location_searching</i></a></li>                    
                     <!--<li><a class="btn-floating blue"><i class="material-icons">attach_file</i></a></li>-->
                 </ul>
             </div>
