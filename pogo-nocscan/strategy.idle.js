@@ -181,14 +181,17 @@ module.exports = function(account, config) {
                 var splitBeehive = s2beehiveHelper.distributeS2Beehive(s2bounds, account.huntScanners.length);
 
                 _.each(account.huntScanners, function(scanAccount, idx) {
+                    var mergedAccount = _.clone(account);
+                    _.forOwn(scanAccount, function(value, key) { mergedAccount[key] = value; });
+
                     // Create the hunt strategy instance for this account.
-                    var huntstrat = huntStratFactory(scanAccount, config, splitBeehive[idx], encounterId);
+                    var huntstrat = huntStratFactory(mergedAccount, config, splitBeehive[idx], encounterId);
                     var huntlogger = new (winston.Logger)({
                         transports: [
                             new (winston.transports.Console)({
                                 formatter: function(options) {
                                     var result = '';
-                                    result += (config.name ? ("[" +  config.name + "-" + scanAccount.username + "] ") : '');
+                                    result += (config.name ? ("[" +  config.name + "-" + mergedAccount.username + "] ") : '');
                                     result += options.level.toUpperCase() + ': ' + (options.message ? options.message : '');
                                     result += (options.meta && Object.keys(options.meta).length ? ' ' + JSON.stringify(options.meta) : '' );
 
@@ -203,7 +206,7 @@ module.exports = function(account, config) {
                     huntstrat.setParent(self);
 
                     // Create worker.
-                    var scanWorker = scanWorkerFactory(config, scanAccount, 1080000, huntstrat, huntlogger);
+                    var scanWorker = scanWorkerFactory(config, mergedAccount, 1080000, huntstrat, huntlogger);
                     huntstrat.setWorker(scanWorker);
                     scanWorker.startWorker();
 

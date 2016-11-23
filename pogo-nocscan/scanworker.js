@@ -218,7 +218,9 @@ module.exports = function(config, account, timeToRun, strategy, logger) {
                     logger.error("Error during initialization:", err);
 
                     if("torconfig" in account)
-                        torHelper.newCircuit(finish, account, logger);                                          
+                        torHelper.newCircuit(finish, account, logger);
+                    else
+                        finish();                                 
                 });   
         });
     }
@@ -291,7 +293,7 @@ module.exports = function(config, account, timeToRun, strategy, logger) {
 
             // Scan again later and also let the strategy know that we didn't scan this position.
             scanTimeout = timeoutHelper.setTimeout(account.username + "-scan", performScan, scanDelay * 1000);
-            strategy.backstep();                        
+            strategy.backstep();
             return;
         }
 
@@ -321,6 +323,7 @@ module.exports = function(config, account, timeToRun, strategy, logger) {
         return bluebird.resolve(mapObjectCall).then(result => {
             if(result == null) {
                 logger.error("Received null mapobject result...");
+                strategy.backstep();
                 return [];
             }
             

@@ -500,6 +500,7 @@
         // Vars
         c: c,
         pokeTable: pokeTable,
+        scannerInstances: scannerInstances,
         
          // Observables.
         uiMode: uiMode,
